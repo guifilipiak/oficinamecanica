@@ -1,0 +1,6 @@
+D:\DEV\Parcker\Parcker.Common\bin\Release\Parcker.Common.dll
+D:\DEV\Parcker\Parcker.Common\bin\Release\Parcker.Common.pdb
+D:\DEV\Parcker\Parcker.Common\obj\Release\Parcker.Common.csproj.CoreCompileInputs.cache
+D:\DEV\Parcker\Parcker.Common\obj\Release\Parcker.Common.dll
+D:\DEV\Parcker\Parcker.Common\obj\Release\Parcker.Common.pdb
+D:\DEV\Parcker\Parcker.Common\obj\Release\Parcker.Common.csprojAssemblyReference.cache

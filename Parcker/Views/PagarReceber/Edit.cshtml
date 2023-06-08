@@ -1,0 +1,160 @@
+﻿@using Parcker.Models.Enums
+@using Parcker.Extension
+@model Parcker.Models.PagarReceberModel
+
+@{
+    ViewBag.Title = "Pagar e Receber";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles{
+    <!-- Page level plugins -->
+    @Styles.Render("~/plugin/autocomplete/css")
+}
+
+<!-- Begin Page Content -->
+<div class="container-fluid">
+
+    <!-- Page Heading -->
+    <h1 class="h3 mb-2 text-gray-800">Pagar e Receber</h1>
+    <p id="page-title" class="mb-4">
+        @if (Model != null & Model.Id != 0)
+        {
+            <text>
+                Editando registro n° @Model.Id
+            </text>
+        }
+        else
+        {
+            <text>
+                Inserindo novo registro
+            </text>
+        }
+    </p>
+
+    <div class="card shadow mb-4">
+        <div class="card-body">
+
+            @using (Ajax.BeginForm(new AjaxOptions()
+            {
+                HttpMethod = "POST",
+                AllowCache = false,
+                LoadingElementId = "preloader-geral",
+                LoadingElementDuration = 1000,
+                OnBegin = "formBegin",
+                OnComplete = "formComplete",
+                OnSuccess = "formSuccess",
+                OnFailure = "formFailure"
+            }))
+            {
+                @Html.AntiForgeryToken()
+                @Html.HiddenFor(model => model.Id)
+                @Html.HiddenFor(model => model.DataCriacao)
+                @Html.HiddenFor(model => model.Parcela)
+                @Html.HiddenFor(model => model.GrupoParcela)
+                <div class="row">
+                    <div class="form-group col-md-4">
+                        @Html.LabelFor(model => model.IdTipoConta, htmlAttributes: new { @class = "control-label" })
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <img id="imgTipoConta" src="@Url.Content("~/Content/img/revenue.png")" data-pagar="@Url.Content("~/Content/img/loss.png")" data-receber="@Url.Content("~/Content/img/revenue.png")" width="30" class="mr-2 mt-1 mb-1" />
+                            </div>
+                            @Html.EnumDropDownListFor(model => model.IdTipoConta, new { @class = "form-control" }.IsDisabled(Model.Id > 0))
+                        </div>
+                        @Html.ValidationMessageFor(model => model.IdTipoConta, "", new { @class = "text-danger" })
+                    </div>
+                    <div class="form-group col-md-2">
+                        @Html.LabelFor(model => model.IdSituacaoConta, htmlAttributes: new { @class = "control-label" })
+                        @Html.EnumDropDownListFor(model => model.IdSituacaoConta, new { @class = "form-control" }.IsDisabled(Model.Id > 0))
+                        @Html.ValidationMessageFor(model => model.IdSituacaoConta, "", new { @class = "text-danger" })
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-md-2">
+                        @Html.LabelFor(model => model.DataPagamento, htmlAttributes: new { @class = "control-label" })
+                        @Html.TextBoxFor(model => model.DataPagamento, new { @class = "form-control date" }.IsDisabled(Model.Id > 0))
+                        @Html.ValidationMessageFor(model => model.DataPagamento, "", new { @class = "text-danger" })
+                    </div>
+
+                    <div class="form-group col-md-2">
+                        @Html.LabelFor(model => model.DataVencimento, htmlAttributes: new { @class = "control-label" })
+                        @Html.TextBoxFor(model => model.DataVencimento, new { @class = "form-control date" }.IsDisabled(Model.Id > 0))
+                        @Html.ValidationMessageFor(model => model.DataVencimento, "", new { @class = "text-danger" })
+                    </div>
+
+                    <div class="form-group col-md-4">
+                        @Html.LabelFor(model => model.IdFormaPagamento, htmlAttributes: new { @class = "control-label" })
+                        @Html.DropDownListFor(model => model.IdFormaPagamento, ViewBag.FormaPagamento as IEnumerable<SelectListItem>, new { @class = "form-control" }.IsDisabled(Model.Id > 0))
+                        @Html.ValidationMessageFor(model => model.IdFormaPagamento, "", new { @class = "text-danger" })
+                    </div>
+
+                    <div class="form-group col-md-2">
+                        @Html.LabelFor(model => model.Valor, htmlAttributes: new { @class = "control-label" })
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <div class="input-group-text">R$</div>
+                            </div>
+                            @Html.TextBoxFor(model => model.Valor, "{0:N2}", new { @class = "form-control decimal text-right" }.IsDisabled(Model.Id > 0))
+                        </div>
+                        @Html.ValidationMessageFor(model => model.Valor, "", new { @class = "text-danger" })
+                    </div>
+
+                    <div id="divTotalParcela" class="form-group col-md-2">
+                        @Html.LabelFor(model => model.TotalParcela, htmlAttributes: new { @class = "control-label" })
+                        @Html.TextBoxFor(model => model.TotalParcela, new { @class = "form-control numero text-right", @maxlength = "2" }.IsDisabled(Model.Id > 0))
+                        @Html.ValidationMessageFor(model => model.TotalParcela, "", new { @class = "text-danger" })
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="form-group col-md-4">
+                        @Html.LabelFor(model => model.IdClassificacao, htmlAttributes: new { @class = "control-label" })
+                        @Html.DropDownListFor(model => model.IdClassificacao, ViewBag.Classificacao as IEnumerable<SelectListItem>, "Selecione uma classificação", new { @class = "form-control" }.IsDisabled(Model.Id > 0))
+                        @Html.ValidationMessageFor(model => model.IdClassificacao, "", new { @class = "text-danger" })
+                    </div>
+
+                    <div class="form-group col-md-4">
+                        @Html.LabelFor(model => model.Descricao, htmlAttributes: new { @class = "control-label" })
+                        @Html.TextBoxFor(model => model.Descricao, new { @class = "form-control" }.IsDisabled(Model.Id > 0))
+                        @Html.ValidationMessageFor(model => model.Descricao, "", new { @class = "text-danger" })
+                    </div>
+
+                    <div class="form-group col-md-4">
+                        @if (Model.Id > 0)
+                        {
+                            <text>
+                                @Html.LabelFor(model => model.IdPessoa, htmlAttributes: new { @class = "control-label" })
+                                @Html.DropDownListFor(model => model.IdPessoa, ViewBag.Pessoas as IEnumerable<SelectListItem>, "Selecione", new { @class = "form-control selectpicker-pessoas", @data_live_search = "true", @disabled = "disabled" })
+                                @Html.ValidationMessageFor(model => model.IdPessoa, "", new { @class = "text-danger" })
+                            </text>
+                        }
+                        else
+                        {
+                            <text>
+                                @Html.LabelFor(model => model.IdPessoa, htmlAttributes: new { @class = "control-label" })
+                                @Html.DropDownListFor(model => model.IdPessoa, ViewBag.Pessoas as IEnumerable<SelectListItem>, "Selecione", new { @class = "form-control selectpicker-pessoas", @data_live_search = "true" })
+                                @Html.ValidationMessageFor(model => model.IdPessoa, "", new { @class = "text-danger" })
+                            </text>
+                        }
+                    </div>
+                </div>
+
+                <div class="form-group text-right mt-4">
+                    @Html.ActionLink("Retornar para a lista", "Index", null, new { @class = "btn btn-link" })
+                    @if (Model.Id == 0)
+                    {
+                        <button id="btnSubmit" type="submit" class="btn btn-success"><i class="fa fa-save"></i>&nbsp;Salvar Alterações</button>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    <!-- Page level plugins -->
+    @Scripts.Render("~/plugin/autocomplete/js")
+
+    <!-- Page level custom scripts -->
+    @Scripts.Render("~/views/pagarreceber/js")
+}

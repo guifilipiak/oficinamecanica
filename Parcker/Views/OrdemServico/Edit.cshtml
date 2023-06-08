@@ -1,0 +1,393 @@
+﻿@using Parcker.Models.Enums;
+@using Parcker.Extension;
+@model Parcker.Models.OrdemServicoModel
+
+@{
+    ViewBag.Title = "Ordem de Serviço";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var bEditar = Model.IdSituacaoServico != (int)SituacaoServicoEnum.Finalizado && Model.IdSituacaoServico != (int)SituacaoServicoEnum.Cancelado;
+}
+
+@section Styles{
+    <!-- Page level plugins -->
+    @Styles.Render("~/plugin/autocomplete/css")
+}
+<!-- Begin Page Content -->
+<div class="container-fluid">
+
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-0">
+        <div class="m-0 p-0">
+            <h1 class="h3 mb-0 text-gray-800">Ordem de Serviço</h1>
+            <p id="page-title" class="mb-4">
+                @if (Model != null & Model.Id != 0)
+                {
+                    <text>
+                        Editando registro n° @Model.Id
+                    </text>
+                }
+                else
+                {
+                    <text>
+                        Inserindo novo registro
+                    </text>
+                }
+            </p>
+        </div>
+        <a id="linkPrinter" href="@Url.Action("Printer", new { id = Model.Id, gerarPDF = false })" target="_blank" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm" style="margin-top:-20px"><i class="fas fa-print fa-sm text-white-50"></i> Imprimir OS</a>
+    </div>
+
+    @Html.Hidden("PagamentoRecebido", Model.HistoricoPagamentos != null && Model.HistoricoPagamentos.Count > 0)
+
+    @using (Ajax.BeginForm(new AjaxOptions()
+    {
+        HttpMethod = "POST",
+        AllowCache = false,
+        LoadingElementId = "preloader-geral",
+        LoadingElementDuration = 1000,
+        OnBegin = "formBegin",
+        OnComplete = "formComplete",
+        OnSuccess = "formSuccess",
+        OnFailure = "formFailure"
+    }))
+    {
+        @Html.AntiForgeryToken()
+        @Html.HiddenFor(model => model.Id)
+        @Html.HiddenFor(model => model.DataCriacao)
+        @Html.HiddenFor(model => model.DataFinalizacao)
+        @Html.Hidden("IdSituacaoServicoFunc", Model.IdSituacaoServico)
+        <div class="row">
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-primary shadow h-100">
+                    <div class="card-body">
+                        <div class="no-gutters align-items-end">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase">
+                                @Html.LabelFor(model => model.Entrada, htmlAttributes: new { @class = "control-label" }) (R$)
+                            </div>
+                            <div class="text-right">
+                                @Html.TextBoxFor(model => model.Entrada, new { @class = "form-control-custom decimal text-right" }.IsDisabled(!bEditar))
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-primary shadow h-100">
+                    <div class="card-body">
+                        <div class="no-gutters align-items-end">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase">
+                                @Html.LabelFor(model => model.SubTotal, htmlAttributes: new { @class = "control-label" }) (R$)
+                            </div>
+                            <div class="text-right">
+                                @Html.TextBoxFor(model => model.SubTotal, new { @class = "form-control-custom text-gray-500 text-right decimal", @readonly = "true" })
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-danger shadow h-100">
+                    <div class="card-body">
+                        <div class="no-gutters align-items-end">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase">
+                                @Html.LabelFor(model => model.Desconto, htmlAttributes: new { @class = "control-label" }) (R$)
+                            </div>
+                            <div class="text-right">
+                                @Html.TextBoxFor(model => model.Desconto, new { @class = "form-control-custom text-gray-500 text-right decimal", @readonly = "true" })
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-success shadow h-100">
+                    <div class="card-body">
+                        <div class="no-gutters align-items-end">
+                            <div class="text-xs font-weight-bold text-success text-uppercase">
+                                @Html.LabelFor(model => model.Total, htmlAttributes: new { @class = "control-label" }) (R$)
+                            </div>
+                            <div class="text-right">
+                                @Html.TextBoxFor(model => model.Total, new { @class = "form-control-custom text-gray-500 text-right decimal", @readonly = "true" })
+                                @{
+                                    var saldo = Model.Total - Model.Entrada;
+                                }
+                            </div>
+                            <p id="saldo" class="text-right text-gray-500 pr-1">saldo: @saldo</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card shadow mb-4">
+            <div class="card-header border-top">
+                <div class="text-primary">DADOS GERAIS</div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    @if (!bEditar)
+                    {
+                        <div class="form-group col-md-3">
+                            @Html.LabelFor(model => model.IdVeiculo, htmlAttributes: new { @class = "control-label" })
+                            @Html.DropDownListFor(model => model.IdVeiculo, ViewBag.Veiculos as IEnumerable<SelectListItem>, "Selecione o veículo", new { @class = "form-control selectpicker-veiculos", @data_live_search = "true", @disabled = "disabled" })
+                            @Html.ValidationMessageFor(model => model.IdVeiculo, "", new { @class = "text-danger" })
+                        </div>
+
+                        <div class="form-group col-md-2">
+                            @Html.LabelFor(model => model.KM, htmlAttributes: new { @class = "control-label" })
+                            <div class="input-group">
+                                <div class="input-group-prepend"><span class="input-group-text">KM</span></div>
+                                @Html.TextBoxFor(model => model.KM, new { @class = "form-control text-right" }.IsDisabled(true))
+                            </div>
+                            @Html.ValidationMessageFor(model => model.KM, "", new { @class = "text-danger" })
+                        </div>
+
+                        <div class="form-group col-md-4">
+                            @Html.LabelFor(model => model.IdCliente, htmlAttributes: new { @class = "control-label" })
+                            @Html.DropDownListFor(model => model.IdCliente, ViewBag.Clientes as IEnumerable<SelectListItem>, "Selecione o cliente", new { @class = "form-control selectpicker-clientes", @data_live_search = "true", @disabled = "disabled" })
+                            @Html.ValidationMessageFor(model => model.IdCliente, "", new { @class = "text-danger" })
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="form-group col-md-3">
+                            @Html.LabelFor(model => model.IdVeiculo, htmlAttributes: new { @class = "control-label" })
+                            @Html.DropDownListFor(model => model.IdVeiculo, ViewBag.Veiculos as IEnumerable<SelectListItem>, "Selecione o veículo", new { @class = "form-control selectpicker-veiculos", @data_live_search = "true" })
+                            @Html.ValidationMessageFor(model => model.IdVeiculo, "", new { @class = "text-danger" })
+                        </div>
+
+                        <div class="form-group col-md-2">
+                            @Html.LabelFor(model => model.KM, htmlAttributes: new { @class = "control-label" })
+                            <div class="input-group">
+                                <div class="input-group-prepend"><span class="input-group-text">KM</span></div>
+                                @Html.TextBoxFor(model => model.KM, new { @class = "form-control text-right" }.IsDisabled(false))
+                            </div>
+                            @Html.ValidationMessageFor(model => model.KM, "", new { @class = "text-danger" })
+                        </div>
+
+                        <div class="form-group col-md-4">
+                            @Html.LabelFor(model => model.IdCliente, htmlAttributes: new { @class = "control-label" })
+                            @Html.DropDownListFor(model => model.IdCliente, ViewBag.Clientes as IEnumerable<SelectListItem>, "Selecione o cliente", new { @class = "form-control selectpicker-clientes", @data_live_search = "true" })
+                            @Html.ValidationMessageFor(model => model.IdCliente, "", new { @class = "text-danger" })
+                        </div>
+                    }
+
+                    <div class="form-group col-md-3">
+                        @Html.LabelFor(model => model.IdSituacaoServico, htmlAttributes: new { @class = "control-label" })
+                        @Html.DropDownListFor(model => model.IdSituacaoServico, ViewBag.Situacoes as IEnumerable<SelectListItem>, "Selecione a Situação da OS", new { @class = "form-control" }.IsDisabled(!bEditar))
+                        @Html.ValidationMessageFor(model => model.IdSituacaoServico, "", new { @class = "text-danger" })
+                    </div>
+                </div>
+            </div>
+            <div class="card-header border-top">
+                <div class="text-primary">ITENS (PRODUTOS E SERVIÇOS)</div>
+            </div>
+            <div class="card-body">
+                @if (bEditar)
+                {
+                    <div id="filterItens" class="row">
+                        <div class="form-group col-md-12">
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <div class="input-group-text"><i class="fa fa-search"></i>&nbsp;Pesquisar Itens</div>
+                                </div>
+                                <input id="search" name="search" class="form-control" style="margin:0px auto;" placeholder="Troca de Óleo, Pneu, Correia, etc..." type="text">
+                            </div>
+                        </div>
+                    </div>
+                }
+                <div class="table-responsive">
+                    <table id="tableItens" class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Descrição</th>
+                                <th class="text-right">Quantidade</th>
+                                <th class="text-right">Valor</th>
+                                <th class="text-right">Desconto</th>
+                                <th class="text-right">Total</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.Itens != null && Model.Itens.Count > 0)
+                            {
+                                var row = 0;
+                                for (int i = 0; i < Model.Itens.Count; i++)
+                                {
+                                    var tipo = Model.Itens.ElementAt(i).Tipo;
+
+                                    <text>
+                                        <tr onchange="calculaLinha(this)" data-index="@i" data-tipo="@tipo" data-id="@(tipo == 1 ? Model.Itens.ElementAt(i).IdProduto : Model.Itens.ElementAt(i).IdServico)">
+                                            <td>
+                                                @Html.Hidden("Grid_Id", Model.Itens.ElementAt(i).Id)
+                                                @Html.Hidden("Grid_IdOrdemServico", Model.Itens.ElementAt(i).IdOrdemServico)
+                                                @Html.Hidden("Grid_IdProduto", Model.Itens.ElementAt(i).IdProduto)
+                                                @Html.Hidden("Grid_IdServico", Model.Itens.ElementAt(i).IdServico)
+                                                @Html.Hidden("Grid_Tipo", tipo)
+                                                @Html.Hidden("Grid_Index", i)
+                                                <span>@(tipo == (int)TipoItemEnum.Produto ? Model.Itens.ElementAt(i).Produto.Descricao : Model.Itens.ElementAt(i).Servico.Descricao)</span>
+                                            </td>
+                                            <td class="text-right" width="50">
+                                                @Html.TextBox("Grid_Quantidade", Model.Itens.ElementAt(i).Quantidade, new { @class = "form-control numero-menor text-right", @type = "number" }.IsDisabled(!bEditar))
+                                            </td>
+                                            <td class="text-right" width="250">
+                                                @Html.TextBox("Grid_ValorUnitario", Model.Itens.ElementAt(i).ValorUnitario.ToString("F2"), new { @class = "form-control decimal text-right" }.IsDisabled(!bEditar))
+                                            </td>
+                                            <td class="text-right" width="250">
+                                                <div class="input-group">
+                                                    @Html.TextBox("Grid_Desconto", Model.Itens.ElementAt(i).Desconto.ToString("F2"), new { @class = "form-control decimal text-right mr-1" }.IsDisabled(!bEditar))
+                                                    @if (bEditar)
+                                                    {
+                                                        <button type="button" class="btn btn-sm btn-primary calcDescListItem" onclick="calcPercItem(@i)"><i class="fa fa-percentage"></i></button>
+                                                    }
+                                                </div>
+                                            </td>
+                                            <td class="text-right" width="250">
+                                                @Html.Hidden("Grid_ValorTotal", Model.Itens.ElementAt(i).ValorTotal)
+                                                <span id="totalTexto">@Model.Itens.ElementAt(i).ValorTotal.ToString("N2")</span>
+                                            </td>
+                                            <td width="130" class="text-center">
+                                                @if (bEditar)
+                                                {
+                                                    <a class="removeListItem" href="javascript:removerLinha(@i)"><i class="fa fa-trash"></i>&nbsp;Remover</a>
+                                                }
+                                            </td>
+                                        </tr>
+                                    </text>
+
+                                    row++;
+                                }
+                            }
+                            else
+                            {
+                                <text>
+                                    <tr class="empty_row">
+                                        <td colspan="6"><p class="p-5 text-center lead">Não há itens nesta ordem de serviço</p></td>
+                                    </tr>
+                                </text>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-header border-top">
+                <div class="text-primary">DESCRIÇÃO DO SERVIÇO</div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="form-group col-md-6">
+                        @Html.LabelFor(model => model.DescricaoServico, htmlAttributes: new { @class = "control-label" })
+                        @Html.TextAreaFor(model => model.DescricaoServico, new { @class = "form-control", @rows = 3 }.IsDisabled(!bEditar))
+                        @Html.ValidationMessageFor(model => model.DescricaoServico, "", new { @class = "text-danger" })
+                    </div>
+
+                    <div class="form-group col-md-6">
+                        @Html.LabelFor(model => model.Observacoes, htmlAttributes: new { @class = "control-label" })
+                        @Html.TextAreaFor(model => model.Observacoes, new { @class = "form-control", @rows = 3 }.IsDisabled(!bEditar))
+                        @Html.ValidationMessageFor(model => model.Observacoes, "", new { @class = "text-danger" })
+                    </div>
+                </div>
+                <div class="form-group text-right">
+                    @Html.ActionLink("Retornar para a lista", "Index", null, new { @class = "btn btn-link" })
+                    @if (bEditar)
+                    {
+                        <button id="btnSubmitOS" type="submit" class="btn btn-success"><i class="fa fa-save"></i>&nbsp;Salvar Alterações</button>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section modals{
+    <div id="modalPagamento" class="modal fade" tabindex="-1" data-backdrop="static" data-keyboard="false" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalCenterTitle">Informar Recebimento</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-secondary">
+                        <p class="alert-heading lead">Dados da Ordem de Serviço</p>
+                        <div class="row">
+                            <div class="form-group col-md-1">
+                                <label>N°</label><br />
+                                <b>@Html.DisplayFor(x => x.Id)</b>
+                            </div>
+                            <div class="form-group col-md-2">
+                                <label>Data de Abertura</label><br />
+                                <b>@Model.DataCriacao.ToString("dd/MM/yyyy")</b>
+                            </div>
+                            <div class="form-group col-md-5">
+                                <label>Descrição</label><br />
+                                <b>@Html.DisplayFor(x => x.DescricaoServico)</b>
+                            </div>
+                            <div class="form-group col-md-2 text-right">
+                                <label>Valor Total</label><br />
+                                <b>R$ @Html.DisplayFor(x => x.Total)</b>
+                            </div>
+                            <div class="form-group col-md-2 text-right">
+                                <label>Saldo</label><br />
+                                <b class="text-danger">R$ <span id="saldoPagamento" class="text-danger">@Html.DisplayFor(x => x.Total)</span></b>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form id="formItemPagamento" data-submited="false">
+                        @Html.Action("FormModalPagamento", new { IdOdemServico = Model.Id })
+                    </form>
+
+                    @using (Ajax.BeginForm("InformarPagamento", new AjaxOptions()
+                    {
+                        HttpMethod = "POST",
+                        AllowCache = false,
+                        LoadingElementId = "preloader-geral",
+                        LoadingElementDuration = 1000,
+                        OnBegin = "formBegin",
+                        OnComplete = "formComplete",
+                        OnSuccess = "formSuccess",
+                        OnFailure = "formFailure"
+                    }))
+                    {
+                        @Html.Hidden("IdOrdemServico", Model.Id)
+                        <text>
+                            <table id="tableItemPagamento" class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Data Pagamento</th>
+                                        <th>Forma de Pagamento</th>
+                                        <th class="text-right">Valor</th>
+                                        <th class="text-right">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td data-index="0" colspan="4" class="text-center">Nenhuma forma de pagamento informada</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <br />
+                            <div class="form-group text-right">
+                                <button id="btnSubmitModal" type="submit" disabled class="btn btn-success"><i class="fa fa-save"></i>&nbsp;Registrar Pagamento</button>
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                            </div>
+                        </text>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts{
+    <!-- Page level plugins -->
+    @Scripts.Render("~/plugin/autocomplete/js")
+
+    <!-- Page level custom scripts -->
+    @Scripts.Render("~/views/ordemservico/js")
+}

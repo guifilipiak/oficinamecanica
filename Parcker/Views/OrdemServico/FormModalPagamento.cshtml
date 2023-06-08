@@ -1,0 +1,39 @@
+﻿@using Parcker.Extension
+@model Parcker.Models.PagarReceberModel
+
+@Html.Hidden("IdOrdemServico", Model.Id)
+@Html.HiddenFor(x => x.Descricao)
+<div class="row">
+    <div class="form-group col-md-3">
+        @Html.LabelFor(x => x.DataPagamento, htmlAttributes: new { @class = "control-label" })
+        @Html.TextBoxFor(x => x.DataPagamento, new { @class = "form-control date" })
+        @Html.ValidationMessageFor(x => x.DataPagamento, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="form-group col-md-3">
+        @Html.LabelFor(x => x.IdFormaPagamento, htmlAttributes: new { @class = "control-label" })
+        @Html.DropDownListFor(x => x.IdFormaPagamento, ViewBag.FormaPagamento as IEnumerable<SelectListItem>, new { @class = "form-control" })
+        @Html.ValidationMessageFor(x => x.IdFormaPagamento, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="form-group col-md-2">
+        @Html.LabelFor(x => x.Valor, htmlAttributes: new { @class = "control-label" })
+        <div class="input-group">
+            <div class="input-group-prepend">
+                <div class="input-group-text">R$</div>
+            </div>
+            @Html.TextBoxFor(x => x.Valor, "{0:N2}", new { @class = "form-control decimal text-right" })
+        </div>
+        @Html.ValidationMessageFor(x => x.Valor, "", new { @class = "text-danger" })
+    </div>
+
+    <div id="divTotalParcela" class="form-group col-md-2">
+        @Html.LabelFor(x => x.TotalParcela, htmlAttributes: new { @class = "control-label" })
+        @Html.TextBoxFor(x => x.TotalParcela, new { @class = "form-control numero text-right", @maxlength = "2" })
+        @Html.ValidationMessageFor(x => x.TotalParcela, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="form-group col-md-2 pt-2">
+        <button id="btnAddFormaPagamento" type="submit" class="btn btn-block btn-primary mt-4"><i class="fa fa-plus"></i>&nbsp;Inserir</button>
+    </div>
+</div>

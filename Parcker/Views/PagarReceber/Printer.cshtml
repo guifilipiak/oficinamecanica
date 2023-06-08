@@ -1,0 +1,177 @@
+﻿@model Parcker.Models.PrinterPRModel
+@using Parcker.Models.Enums
+@{
+    Layout = null;
+    ViewBag.Title = "Impressão";
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Impressão de Relatório de Fluxo de Caixa - Oficina Parcker</title>
+    @Styles.Render("~/impressao/css")
+    @Scripts.Render("~/impressao/js")
+    <link rel="shortcut icon" type="image/png" href="@Url.Content("~/Content/img/logo_icon.png")" />
+    <style type="text/css">
+        @@page {
+            size: A4;
+        }
+
+        table {
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body class="container">
+    @if (Model == null)
+    {
+        <text>
+            <p class="lead pt-3 text-center">Não foi possível gerar o relatório.</p>
+        </text>
+    }
+    else
+    {
+        <text>
+            <section class="sheet padding-10mm">
+                <div class="text-right no-print">
+                    @if (Model.GerarPDF)
+                    {
+                        using (Html.BeginForm("Printer", "PagarReceber", FormMethod.Post, new { @target = "_blank" }))
+                        {
+                            @Html.HiddenFor(x => x.DataInicio)
+                            @Html.HiddenFor(x => x.DataFinal)
+
+                            <input type="hidden" name="GerarPDF" id="GerarPDF" value="@Model.GerarPDF.ToString()" />
+
+                            for (int i = 0; i < Model.IdFormaPagamento.Length; i++)
+                            {
+                                @Html.HiddenFor(model => Model.IdFormaPagamento[i])
+                            }
+
+                            for (int i = 0; i < Model.IdSituacaoConta.Length; i++)
+                            {
+                                @Html.HiddenFor(model => Model.IdSituacaoConta[i])
+                            }
+                            <button type="submit" class="btn btn-link"><i class="fa fa-file-pdf"></i>&nbsp;GERAR PDF</button>
+                        }
+                    }
+                </div>
+                <article class="text-center mb-0">
+                    <table class="table table-borderless mb-0">
+                        <tr>
+                            <td width="250" class="text-left pl-0"><img src="@Url.Content("~/Content/img/logo.png")" width="250" /></td>
+                            <td width="250" class="text-right pr-0">
+                                @if (Model.Usuario.Pessoa != null)
+                                {
+                                    <p class="lead">
+                                        @if (Model.Usuario.Pessoa.Tipo == (int)TipoPessoaEnum.Fisica)
+                                        {
+                                            <text>
+                                                @Model.Usuario.Pessoa.Nome
+                                            </text>
+                                        }
+                                        else
+                                        {
+                                            <text>
+                                                @Model.Usuario.Pessoa.Fantasia
+                                            </text>
+                                        }
+                                    </p>
+                                    <div class="mb-4">
+                                        @if (Model.Usuario.Pessoa.Tipo == (int)TipoPessoaEnum.Fisica)
+                                        {
+                                            <small>Nome: </small> @Model.Usuario.Pessoa.Nome<br />
+                                            <small>CPF: </small> @Model.Usuario.Pessoa.CPF<br />
+                                            <small>Telefone: </small> @(Model.Usuario.Pessoa.Telefone1 + " | " + Model.Usuario.Pessoa.Telefone2)<br />
+                                            <small>Endereço: </small> @(Model.Usuario.Pessoa.Endereco + ", n° " + Model.Usuario.Pessoa.Numero + ", " + Model.Usuario.Pessoa.Bairro + " - " + Model.Usuario.Pessoa.Cidade + "/" + Model.Usuario.Pessoa.UF)<br />
+                                        }
+                                        else
+                                        {
+                                            <small>Razão Social: </small> @Model.Usuario.Pessoa.RazaoSocial<br />
+                                            <small>CNPJ: </small> @Model.Usuario.Pessoa.CNPJ<br />
+                                            <small>Telefone: </small> @(Model.Usuario.Pessoa.Telefone1 + " | " + Model.Usuario.Pessoa.Telefone2)<br />
+                                            <small>Endereço: </small> @(Model.Usuario.Pessoa.Endereco + ", n° " + Model.Usuario.Pessoa.Numero + ", " + Model.Usuario.Pessoa.Bairro + " - " + Model.Usuario.Pessoa.Cidade + "/" + Model.Usuario.Pessoa.UF)<br />
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <p class="lead"></p>
+                                    <div class="mb-4"></div>
+                                }
+                            </td>
+                    </table>
+                </article>
+                <h4>Extrato do Período</h4>
+                <p class="lead">@Model.DataInicio.ToString("dd/MM/yyyy") até @Model.DataFinal.ToString("dd/MM/yyyy")</p>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th width="30"></th>
+                            <th width="80">Pagamento</th>
+                            <th width="80">Vencimento</th>
+                            <th width="170">Classificação</th>
+                            <th width="200">Cobrador/Pagante</th>
+                            <th width="150">Forma Pagamento</th>
+                            <th>Descrição</th>
+                            <th width="100" class="text-right">Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            var index = 1;
+                            foreach (var item in Model.PagarReceber)
+                            {
+                                <tr>
+                                    <td>@index</td>
+                                    <td>@item.DataPagamento.Value.ToString("dd/MM/yyyy")</td>
+                                    <td>@(item.DataVencimento.HasValue ? item.DataVencimento.Value.ToString("dd/MM/yyyy") : "")</td>
+                                    <td>@item.Classificacao.Descricao</td>
+                                    <td>@(string.IsNullOrEmpty(item.Pessoa?.Nome ?? "") ? item.Pessoa?.RazaoSocial ?? "" : item.Pessoa?.Nome ?? "")</td>
+                                    <td>@item.FormasPagamento.Descricao</td>
+                                    <td>@item.Descricao</td>
+                                    <td class="text-right @(item.IdTipoConta == (int)TipoContaEnum.Pagar ? "text-danger" : "text-success")">@(item.IdTipoConta == (int)TipoContaEnum.Pagar ? "-" : "") R$ @item.Valor.ToString("N2")</td>
+                                </tr>
+
+                                index++;
+                            }
+                        }
+                    </tbody>
+                </table>
+                @{
+                    var totalDespesas = Model.PagarReceber.Where(x => x.IdTipoConta == (int)TipoContaEnum.Pagar).Sum(x => x.Valor);
+                    var totalReceitas = Model.PagarReceber.Where(x => x.IdTipoConta == (int)TipoContaEnum.Receber).Sum(x => x.Valor);
+                    var saldo = totalReceitas - totalDespesas;
+                }
+                <table class="table table-borderless" style="margin-top:20px;">
+                    <tr>
+                        <td width="250" class="text-right">
+                            <p>Total Despesas</p>
+                            <p class="lead">R$ @totalDespesas.ToString("N2")</p>
+                        </td>
+                        <td width="250" class="text-right">
+                            <p>Total Receitas</p>
+                            <p class="lead">R$ @totalReceitas.ToString("N2")</p>
+                        </td>
+                        <td width="250" class="text-right">
+                            <p>Saldo Geral</p>
+                            @if (saldo < 0)
+                            {
+                                <p class="lead text-danger">R$ @saldo.ToString("N2")</p>
+                            }
+                            else
+                            {
+                                <p class="lead text-success">R$ @saldo.ToString("N2")</p>
+                            }
+                        </td>
+                    </tr>
+                </table>
+            </section>
+        </text>
+    }
+
+    <script type="text/javascript">
+        var URLBase = "@(Url.Content("~/"))";
+    </script>
+</body>
+</html>

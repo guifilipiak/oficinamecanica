@@ -1,0 +1,107 @@
+﻿@model Parcker.Models.AlertaModel
+
+@{
+    /**/
+
+    ViewBag.Title = "Alerta";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles{
+    <!-- Page level plugins -->
+    @Styles.Render("~/plugin/autocomplete/css")
+}
+<!-- Begin Page Content -->
+<div class="container-fluid">
+
+    <!-- Page Heading -->
+    <h1 class="h3 mb-2 text-gray-800">Alertas</h1>
+    <p id="page-title" class="mb-4">
+        @if (Model != null & Model.Id != 0)
+        {
+            <text>
+                Editando registro n° @Model.Id
+            </text>
+        }
+        else
+        {
+            <text>
+                Inserindo novo registro
+            </text>
+        }
+    </p>
+
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            @using (Ajax.BeginForm(new AjaxOptions()
+            {
+                HttpMethod = "POST",
+                AllowCache = false,
+                LoadingElementId = "preloader-geral",
+                LoadingElementDuration = 1000,
+                OnBegin = "formBegin",
+                OnComplete = "formComplete",
+                OnSuccess = "formSuccess",
+                OnFailure = "formFailure"
+            }))
+            {
+                @Html.AntiForgeryToken()
+                @Html.HiddenFor(model => model.Id)
+                @Html.HiddenFor(model => model.DataCriacao)
+                @Html.HiddenFor(model => model.DataAlertaEnviado)
+
+                <div class="row">
+                    <div class="form-group col-md-12">
+                        @Html.LabelFor(model => model.Descricao, htmlAttributes: new { @class = "control-label" })
+                        @Html.EditorFor(model => model.Descricao, new { htmlAttributes = new { @class = "form-control" } })
+                        @Html.ValidationMessageFor(model => model.Descricao, "", new { @class = "text-danger" })
+                    </div>
+
+                    <div class="form-group col-md-4">
+                        @Html.LabelFor(model => model.Dias, htmlAttributes: new { @class = "control-label" })
+                        <div class="input-group">
+                            @Html.EditorFor(model => model.Dias, new { htmlAttributes = new { @class = "form-control numero text-right" } })
+                            <div class="input-group-append">
+                                <div class="input-group-text">DIA(S)</div>
+                            </div>
+                        </div>
+                        @Html.ValidationMessageFor(model => model.Dias, "", new { @class = "text-danger" })
+                    </div>
+
+                    <div class="form-group col-md-6">
+                        @Html.LabelFor(model => model.IdVeiculo, htmlAttributes: new { @class = "control-label" })
+                        @Html.DropDownListFor(model => model.IdVeiculo, ViewBag.Veiculos as IEnumerable<SelectListItem>, "Selecione o veículo", new { @class = "form-control selectpicker-veiculos", @data_live_search = "true" })
+                        @Html.ValidationMessageFor(model => model.IdVeiculo, "", new { @class = "text-danger" })
+                    </div>
+
+                    <div class="form-group col-md-2 mt-4 pt-2">
+                        <div class="custom-control custom-checkbox btn btn-link">
+                            @Html.CheckBoxFor(model => model.Ativo, new { @class = "custom-control-input" })
+                            @Html.LabelFor(model => model.Ativo, htmlAttributes: new { @class = "custom-control-label" })
+                        </div>
+                        @Html.ValidationMessageFor(model => model.Ativo, "", new { @class = "text-danger" })
+                    </div>
+                </div>
+
+                <div class="form-group text-right">
+                    @Html.ActionLink("Retornar para a lista", "Index", null, new { @class = "btn btn-link" })
+                    <button type="submit" class="btn btn-success"><i class="fa fa-save"></i>&nbsp;Salvar Alterações</button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    <!-- Page level plugins -->
+    @Scripts.Render("~/plugin/autocomplete/js")
+
+    <!-- Page level custom scripts -->
+    @Scripts.Render("~/views/alerta/js")
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $("#menu-alerta").addClass("active");
+        });
+    </script>
+}

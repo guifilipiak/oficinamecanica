@@ -1,0 +1,58 @@
+﻿@model IEnumerable<Parcker.Models.AlertaModel>
+
+@{
+    Layout = null;
+
+    var produtosEstoqueMinimo = ViewData["ProdutosEstoqueMinimo"] as IEnumerable<Parcker.Domain.Produto>;
+}
+
+<!-- Nav Item - Alerts -->
+<li id="nav-alertas" class="nav-item dropdown no-arrow mx-1">
+    <a class="nav-link dropdown-toggle" href="#" id="alertsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <i class="fas fa-bell fa-fw"></i>
+        <!-- Counter - Alerts -->
+        <span class="badge badge-danger badge-counter">@(Model.Count() + produtosEstoqueMinimo.Count())</span>
+    </a>
+    <!-- Dropdown - Alerts -->
+    <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="alertsDropdown">
+        <h6 class="dropdown-header">
+            NOTIFICAÇÕES E AVISOS DE ESTOQUE
+        </h6>
+        @foreach (var item in Model)
+        {
+            <text>
+                <a class="dropdown-item d-flex align-items-center" href="javascript:alertaExpirado(@item.Id, '@item.Descricao', '@item.DescricaoAlertaMenu')">
+                    @*<div class="mr-3">
+                        <div class="icon-circle bg-warning">
+                            <i class="fas fa-exclamation-triangle text-white"></i>
+                        </div>
+                    </div>*@
+                    <div>
+                        <div class="small text-gray-500">Último alerta: @(item.DataAlertaEnviado.HasValue ? item.DataAlertaEnviado.Value.ToLongDateString() : "Não enviado")</div>
+                        <b>@item.Descricao</b><br />
+                        @item.DescricaoAlertaMenu
+                    </div>
+                </a>
+            </text>
+        }
+        <a class="dropdown-item text-center small text-gray-500" href="@Url.Action("Index","Alerta")">Mostrar lista com todos os alertas</a>
+        @foreach (var item in produtosEstoqueMinimo)
+        {
+            <text>
+                <a class="dropdown-item d-flex align-items-center" href="@Url.Action("Edit","Produto", new { id = item.Id })">
+                    @*<div class="mr-3">
+                        <div class="icon-circle bg-warning">
+                            <i class="fas fa-exclamation-triangle text-white"></i>
+                        </div>
+                    </div>*@
+                    <div>
+                        <div class="small text-gray-500">Estoque atual: @item.Estoque</div>
+                        <b>@item.Nome</b><br />
+                        Nível: <span class="text-@(item.Estoque == item.EstoqueMinimo ? "warning" : "danger")">@(item.Estoque == item.EstoqueMinimo ? "ATENÇÃO" : "CRÍTICO")</span>
+                    </div>
+                </a>
+            </text>
+        }
+        <a class="dropdown-item text-center small text-gray-500" href="@Url.Action("Index","Produto")">Gerenciar meus produtos</a>
+    </div>
+</li>

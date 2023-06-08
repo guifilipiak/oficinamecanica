@@ -1,0 +1,26 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="shortcut icon" type="image/png" href="@Url.Content("~/Content/img/logo_icon.png")" />
+    <title>@ViewBag.Title - Oficina Parcker</title>
+
+    @Styles.Render("~/layout-flat/css")
+
+    @Scripts.Render("~/bundles/modernizr")
+
+    @RenderSection("styles", required: false)
+</head>
+<body class="bg-gradient-primary">
+
+    @RenderBody()
+
+    @Scripts.Render("~/layout-flat/js")
+
+    @RenderSection("scripts", required: false)
+</body>
+</html>

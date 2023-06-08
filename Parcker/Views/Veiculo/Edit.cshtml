@@ -1,0 +1,155 @@
+﻿@model Parcker.Models.VeiculoModel
+
+@{
+    ViewBag.Title = "Veículo";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles{
+    <!-- Page level plugins -->
+    @Styles.Render("~/plugin/autocomplete/css")
+}
+
+<!-- Begin Page Content -->
+<div class="container-fluid">
+
+    <!-- Page Heading -->
+    <h1 class="h3 mb-2 text-gray-800">Veículos</h1>
+    <p id="page-title" class="mb-4">
+        @if (Model != null & Model.Id != 0)
+        {
+            <text>
+                Editando registro n° @Model.Id
+            </text>
+        }
+        else
+        {
+            <text>
+                Inserindo novo registro
+            </text>
+        }
+    </p>
+
+    <div class="card shadow mb-4">
+        <div class="card-body">
+
+            @using (Ajax.BeginForm(new AjaxOptions()
+            {
+                HttpMethod = "POST",
+                AllowCache = false,
+                LoadingElementId = "preloader-geral",
+                LoadingElementDuration = 1000,
+                OnBegin = "formBegin",
+                OnComplete = "formComplete",
+                OnSuccess = "formSuccess",
+                OnFailure = "formFailure"
+            }))
+            {
+                @Html.AntiForgeryToken()
+                @Html.HiddenFor(model => model.Id)
+                @Html.HiddenFor(model => model.DataCriacao)
+
+                <div class="row">
+                    <div class="form-group col-md-3">
+                        @Html.LabelFor(model => model.Placa, htmlAttributes: new { @class = "control-label" })
+                        @Html.EditorFor(model => model.Placa, new { htmlAttributes = new { @class = "form-control placa", @data_transform = "upper" } })
+                        @Html.ValidationMessageFor(model => model.Placa, "", new { @class = "text-danger" })
+                    </div>
+
+                    <div class="form-group col-md-3">
+                        @Html.LabelFor(model => model.Modelo, htmlAttributes: new { @class = "control-label" })
+                        @Html.EditorFor(model => model.Modelo, new { htmlAttributes = new { @class = "form-control", @data_transform = "upper" } })
+                        @Html.ValidationMessageFor(model => model.Modelo, "", new { @class = "text-danger" })
+                    </div>
+
+                    <div class="form-group col-md-3">
+                        @Html.LabelFor(model => model.Chassi, htmlAttributes: new { @class = "control-label" })
+                        @Html.EditorFor(model => model.Chassi, new { htmlAttributes = new { @class = "form-control", @data_custom_mask = "AAAAAAAAAAAAAAAAA", @data_transform = "upper" } })
+                        @Html.ValidationMessageFor(model => model.Chassi, "", new { @class = "text-danger" })
+                    </div>
+
+                    <div class="form-group col-md-3">
+                        @Html.LabelFor(model => model.Renavam, htmlAttributes: new { @class = "control-label" })
+                        @Html.EditorFor(model => model.Renavam, new { htmlAttributes = new { @class = "form-control", @data_custom_mask = "AAAAAAAAAAAA", @data_transform = "upper" } })
+                        @Html.ValidationMessageFor(model => model.Renavam, "", new { @class = "text-danger" })
+                    </div>
+
+                    <div class="form-group col-md-3">
+                        @Html.LabelFor(model => model.Cor, htmlAttributes: new { @class = "control-label" })
+                        @Html.EditorFor(model => model.Cor, new { htmlAttributes = new { @class = "form-control", @data_transform = "upper" } })
+                        @Html.ValidationMessageFor(model => model.Cor, "", new { @class = "text-danger" })
+                    </div>
+
+                    <div class="form-group col-md-3">
+                        @Html.LabelFor(model => model.Ano, htmlAttributes: new { @class = "control-label" })
+                        @Html.EditorFor(model => model.Ano, new { htmlAttributes = new { @class = "form-control ano" } })
+                        @Html.ValidationMessageFor(model => model.Ano, "", new { @class = "text-danger" })
+                    </div>
+
+                    <div class="form-group col-md-3">
+                        @Html.LabelFor(model => model.AnoFabricacao, htmlAttributes: new { @class = "control-label" })
+                        @Html.EditorFor(model => model.AnoFabricacao, new { htmlAttributes = new { @class = "form-control ano" } })
+                        @Html.ValidationMessageFor(model => model.AnoFabricacao, "", new { @class = "text-danger" })
+                    </div>
+
+                    <div class="form-group col-md-3">
+                        @Html.LabelFor(model => model.KM, htmlAttributes: new { @class = "control-label" })
+                        <div class="input-group">
+                            <div class="input-group-prepend"><span class="input-group-text">KM</span></div>
+                            @Html.EditorFor(model => model.KM, new { htmlAttributes = new { @class = "form-control text-right" } })
+                        </div>
+                        @Html.ValidationMessageFor(model => model.KM, "", new { @class = "text-danger" })
+                    </div>
+
+                    <div class="form-group col-md-3">
+                        @Html.LabelFor(model => model.IdPessoa, htmlAttributes: new { @class = "control-label" })
+                        @Html.DropDownListFor(model => model.IdPessoa, ViewBag.Pessoas as IEnumerable<SelectListItem>, "Selecione um Proprietário", new { @class = "form-control selectpicker-pessoas", @data_live_search = "true" })
+                        @Html.ValidationMessageFor(model => model.IdPessoa, "", new { @class = "text-danger" })
+                    </div>
+
+                    <div class="form-group col-md-3">
+                        @Html.LabelFor(model => model.IdMarca, htmlAttributes: new { @class = "control-label" })
+                        @Html.DropDownListFor(model => model.IdMarca, ViewBag.Marcas as IEnumerable<SelectListItem>, "Selecione uma Marca", new { @class = "form-control" })
+                        @Html.ValidationMessageFor(model => model.IdMarca, "", new { @class = "text-danger" })
+                    </div>
+                </div>
+
+                <div class="form-group text-right">
+                    @Html.ActionLink("Retornar para a lista", "Index", null, new { @class = "btn btn-link" })
+                    <button type="submit" class="btn btn-success"><i class="fa fa-save"></i>&nbsp;Salvar Alterações</button>
+                </div>
+            }
+        </div>
+    </div>
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <h4>Serviços Realizados</h4>
+            <hr />
+            <div class="row">
+                @if (Model != null && Model.OrdensServico != null && Model.OrdensServico.Count > 0)
+                {
+                    foreach (var item in Model.OrdensServico.OrderByDescending(x => x.DataCriacao))
+                    {
+                        <div class="col-md-6">
+                            <a href="@Url.Action("Edit","OrdemServico",new { id = item.Id })"><i class="fa fa-car-crash"></i> &nbsp; <b>N° @item.Id - @item.DataCriacao.ToLongDateString() - R$ @item.Total.ToString("N2")</b></a>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="col-md-12">
+                        <p class="lead text-center">Nenhuma ordem de serviço cadastrada.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    <!-- Page level plugins -->
+    @Scripts.Render("~/plugin/autocomplete/js")
+
+    <!-- Page level custom scripts -->
+    @Scripts.Render("~/views/veiculo/js")
+}

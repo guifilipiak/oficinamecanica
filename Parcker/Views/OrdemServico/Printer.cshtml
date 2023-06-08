@@ -1,0 +1,232 @@
+﻿@model Parcker.Models.PrinterOSModel
+@using Parcker.Models.Enums
+@{
+    Layout = null;
+    ViewBag.Title = "Impressão";
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Impressão de OS - Oficina Parcker</title>
+    @Styles.Render("~/impressao/css")
+    @Scripts.Render("~/impressao/js")
+    <link rel="shortcut icon" type="image/png" href="@Url.Content("~/Content/img/logo_icon.png")" />
+    <style type="text/css">
+        @@page {
+            size: A4;
+        }
+
+        table {
+            font-size: 12px;
+        }
+
+            table > thead > tr > th {
+                padding: 4px 6px !important;
+            }
+    </style>
+</head>
+<body class="container">
+
+    <section class="sheet padding-10mm">
+        <div class="text-right no-print">
+            @if (!Request.QueryString["gerarPDF"].AsBool() && !this.IsAjax)
+            {
+                <button type="button" class="btn btn-link" onclick="enviarEmailOS(@Model.OrdemServico.Id,'')"><i class="fa fa-envelope-open-text"></i>&nbsp;ENVIAR POR E-MAIL</button>
+                <a class="btn btn-link" href="@Url.Action("Printer",new { gerarPDF = true })"><i class="fa fa-file-pdf"></i>&nbsp;GERAR PDF</a>
+            }
+        </div>
+        <article class="text-center mb-0">
+            <table class="table table-borderless mb-0">
+                <tr>
+                    <td width="250" class="text-left pl-0"><img src="@Url.Content("~/Content/img/logo.png")" width="250" /></td>
+                    <td width="250" class="text-right pr-0">
+                        @if (Model.Usuario.Pessoa != null)
+                        {
+                            <p class="lead">
+                                @if (Model.Usuario.Pessoa.Tipo == (int)TipoPessoaEnum.Fisica)
+                                {
+                                    <text>
+                                        @Model.Usuario.Pessoa.Nome
+                                    </text>
+                                }
+                                else
+                                {
+                                    <text>
+                                        @Model.Usuario.Pessoa.Fantasia
+                                    </text>
+                                }
+                            </p>
+                            <div class="mb-4">
+                                @if (Model.Usuario.Pessoa.Tipo == (int)TipoPessoaEnum.Fisica)
+                                {
+                                    <small>Nome: </small> @Model.Usuario.Pessoa.Nome<br />
+                                    <small>CPF: </small> @Model.Usuario.Pessoa.CPF<br />
+                                    <small>Telefone: </small> @(Model.Usuario.Pessoa.Telefone1 + " | " + Model.Usuario.Pessoa.Telefone2)<br />
+                                    <small>Endereço: </small> @(Model.Usuario.Pessoa.Endereco + ", n° " + Model.Usuario.Pessoa.Numero + ", " + Model.Usuario.Pessoa.Bairro + " - " + Model.Usuario.Pessoa.Cidade + "/" + Model.Usuario.Pessoa.UF)<br />
+                                }
+                                else
+                                {
+                                    <small>Razão Social: </small> @Model.Usuario.Pessoa.RazaoSocial<br />
+                                    <small>CNPJ: </small> @Model.Usuario.Pessoa.CNPJ<br />
+                                    <small>Telefone: </small> @(Model.Usuario.Pessoa.Telefone1 + " | " + Model.Usuario.Pessoa.Telefone2)<br />
+                                    <small>Endereço: </small> @(Model.Usuario.Pessoa.Endereco + ", n° " + Model.Usuario.Pessoa.Numero + ", " + Model.Usuario.Pessoa.Bairro + " - " + Model.Usuario.Pessoa.Cidade + "/" + Model.Usuario.Pessoa.UF)<br />
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="lead"></p>
+                            <div class="mb-4"></div>
+                        }
+                    </td>
+            </table>
+        </article>
+        <h4>Ordem de Serviço n° @Model.OrdemServico.Id</h4>
+        <p class="text-left">
+            <small>OS criada em: @Model.OrdemServico.DataCriacao.ToLongDateString()</small>
+        </p>
+        <hr class="mt-2 mb-0" />
+        <table class="table table-borderless">
+            <tr>
+                <td width="250" class="text-left pl-0">
+                    <p class="lead mb-0">Cliente</p>
+                    <div>
+                        @if (Model.OrdemServico.Cliente.Pessoa.Tipo == (int)TipoPessoaEnum.Fisica)
+                        {
+                            <text>
+                                Nome:&nbsp;&nbsp;@Model.OrdemServico.Cliente.Pessoa.Nome<br />
+                                CPF:&nbsp;&nbsp;@Model.OrdemServico.Cliente.Pessoa.CPF<br />
+                                Telefone:&nbsp;&nbsp;@(Model.OrdemServico.Cliente.Pessoa.Telefone1 + " | " + Model.OrdemServico.Cliente.Pessoa.Telefone2)<br />
+                                Endereço:&nbsp;&nbsp;@(Model.OrdemServico.Cliente.Pessoa.Endereco + ", n° " + Model.OrdemServico.Cliente.Pessoa.Numero + ", " + Model.OrdemServico.Cliente.Pessoa.Bairro + " - " + Model.OrdemServico.Cliente.Pessoa.Cidade + "/" + Model.OrdemServico.Cliente.Pessoa.UF)<br />
+                            </text>
+                        }
+                        else
+                        {
+                            <text>
+                                Razão Social:&nbsp;&nbsp;@Model.OrdemServico.Cliente.Pessoa.RazaoSocial<br />
+                                CNPJ:&nbsp;&nbsp;@Model.OrdemServico.Cliente.Pessoa.CNPJ<br />
+                                Telefone:&nbsp;&nbsp;@(Model.OrdemServico.Cliente.Pessoa.Telefone1 + " | " + Model.OrdemServico.Cliente.Pessoa.Telefone2)<br />
+                                Endereço:&nbsp;&nbsp;@(Model.OrdemServico.Cliente.Pessoa.Endereco + ", n° " + Model.OrdemServico.Cliente.Pessoa.Numero + ", " + Model.OrdemServico.Cliente.Pessoa.Bairro + " - " + Model.OrdemServico.Cliente.Pessoa.Cidade + "/" + Model.OrdemServico.Cliente.Pessoa.UF)<br />
+                            </text>
+                        }
+                    </div>
+                </td>
+                <td width="250" class="text-left pl-0">
+                    <p class="lead mb-0">Veículo</p>
+                    <table class="table table-borderless" style="padding:0;margin:0">
+                        <tr>
+                            <td style="padding:0;margin:0">
+                                Placa:&nbsp;&nbsp;@Model.OrdemServico.Veiculo.Placa<br />
+                                Marca:&nbsp;&nbsp;@(Model.OrdemServico.Veiculo.Marca?.Descricao)<br />
+                                Ano:&nbsp;&nbsp;@Model.OrdemServico.Veiculo.Ano<br />
+                                KM:&nbsp;&nbsp;@Model.OrdemServico.KM
+                            </td>
+                            <td style="padding:0;margin:0">
+                                Renavam:&nbsp;&nbsp;@Model.OrdemServico.Veiculo.Renavam<br />
+                                Modelo:&nbsp;&nbsp;@Model.OrdemServico.Veiculo.Modelo<br />
+                                Cor:&nbsp;&nbsp;@Model.OrdemServico.Veiculo.Cor<br />
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+        <hr class="mt-0 mb-2" />
+        <p class="lead">Serviços</p>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th width="50">Serviço</th>
+                    <th>Descrição</th>
+                    <th width="50" class="text-right">Quantidade</th>
+                    <th width="150" class="text-right">Valor Unitário</th>
+                    <th width="150" class="text-right">Desconto</th>
+                    <th width="150" class="text-right">Valor Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    var index = 1;
+                    foreach (var item in Model.OrdemServico.Itens.Where(x => x.Tipo == (int)TipoItemEnum.Servico))
+                    {
+                        <tr>
+                            <td>@index</td>
+                            <td>@item.Servico.Descricao</td>
+                            <td class="text-right">@item.Quantidade</td>
+                            <td class="text-right">@item.ValorUnitario</td>
+                            <td class="text-right">@item.Desconto</td>
+                            <td class="text-right">@item.ValorTotal.ToString("N2")</td>
+                        </tr>
+
+                        index++;
+                    }
+                }
+            </tbody>
+        </table>
+        <p class="lead">Produtos</p>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th width="50">Produto</th>
+                    <th>Descrição</th>
+                    <th width="50" class="text-right">Quantidade</th>
+                    <th width="150" class="text-right">Valor Unitário</th>
+                    <th width="150" class="text-right">Desconto</th>
+                    <th width="150" class="text-right">Valor Total</th>
+                </tr>
+            </thead>
+            @{
+                index = 1;
+                foreach (var item in Model.OrdemServico.Itens.Where(x => x.Tipo == (int)TipoItemEnum.Produto))
+                {
+                    <tr>
+                        <td>@index</td>
+                        <td>@item.Produto.Descricao</td>
+                        <td class="text-right">@item.Quantidade</td>
+                        <td class="text-right">@item.ValorUnitario.ToString("N2")</td>
+                        <td class="text-right">@item.Desconto.ToString("N2")</td>
+                        <td class="text-right">@item.ValorTotal.ToString("N2")</td>
+                    </tr>
+
+                    index++;
+                }
+            }
+            <tr>
+                <th></th>
+                <th colspan="2" class="text-right"><p>Total Itens:</p></th>
+                <td class="text-right"><p>R$ @Model.OrdemServico.SubTotal.ToString("N2")</p></td>
+                <th class="text-right"><p>Total Geral:</p></th>
+                <td class="text-right"><h5>R$ @Model.OrdemServico.Total.ToString("N2")</h5></td>
+            </tr>
+        </table>
+        <table class="table table-borderless">
+            <tr>
+                <td width="250" class="text-right">
+                    <p>Descrição do Serviço</p>
+                    <p>@Model.OrdemServico.DescricaoServico</p>
+                </td>
+                <td width="250" class="text-right">
+                    <p>Observações</p>
+                    <p>@Model.OrdemServico.Observacoes</p>
+                </td>
+            </tr>
+        </table>
+        <table class="table table-borderless">
+            <tr>
+                <td width="250" class="text-right">
+                    <p>Assinatura do Responsável</p>
+                    <p style="border-bottom:1px solid #333;width:80%;float:right"><br /></p>
+                </td>
+                <td width="250" class="text-right">
+                    <p>Assinatura do Cliente</p>
+                    <p style="border-bottom:1px solid #333;width:80%;float:right"><br /></p>
+                </td>
+            </tr>
+        </table>
+    </section>
+    <script type="text/javascript">
+        var URLBase = "@(Url.Content("~/"))";
+    </script>
+</body>
+</html>

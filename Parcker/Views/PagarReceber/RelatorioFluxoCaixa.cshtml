@@ -1,0 +1,104 @@
+﻿@using Parcker.Extension
+@model Parcker.Models.PrinterPRModel
+@{
+    ViewBag.Title = "Relatório Fluxo de Caixa";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles{
+    <!-- Page level plugins -->
+    @Styles.Render("~/plugin/autocomplete/css")
+}
+
+<!-- Begin Page Content -->
+<div class="container-fluid">
+
+    <!-- Page Heading -->
+    <h1 class="h3 mb-2 text-gray-800">Relatório Fluxo de Caixa</h1>
+    <p id="page-title" class="mb-4">
+        Aqui você pode gerar relatórios de fluxo de caixa por período, status e formas de pagamento.
+    </p>
+
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            @using (Html.BeginForm("Printer", "PagarReceber", FormMethod.Post, new { @target = "_blank" }))
+            {
+                @Html.HiddenFor(x => x.GerarPDF)
+                <div class="row">
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>Data Início</label>
+                            @Html.TextBoxFor(x => x.DataInicio, new { @class = "form-control date" })
+                            @Html.ValidationMessageFor(x => x.DataInicio, "", new { @class = "text-danger" })
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>Data Final</label>
+                            @Html.TextBoxFor(x => x.DataFinal, new { @class = "form-control date" })
+                            @Html.ValidationMessageFor(x => x.DataFinal, "", new { @class = "text-danger" })
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>Situações</label>
+                            <select id="IdSituacaoConta" multiple name="IdSituacaoConta" class="form-control selectpicker">
+                                <option value="1">Pendente</option>
+                                <option value="2" selected>Pago</option>
+                                <option value="3">Inativo</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Formas de Pagamento</label>
+                            <select id="IdFormaPagamento" multiple name="IdFormaPagamento" class="form-control selectpicker">
+                                <option value="1" selected>Boleto</option>
+                                <option value="2" selected>Dinheiro</option>
+                                <option value="3" selected>Cartão de Crédito</option>
+                                <option value="4" selected>Cartão de Débito</option>
+                                <option value="5" selected>Cheque</option>
+                                <option value="6" selected>Transferência Bancária</option>
+                                <option value="7" selected>Depósito</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group pt-2 text-center">
+                            <button id="btnVisualizar" type="button" class="btn btn-outline-primary btn-block mt-4"><i class="fa fa-eye"></i>&nbsp;Visualizar</button>
+                        </div>
+                    </div>
+                    <div class="col-md-1">
+                        <div class="form-group pt-2 text-center">
+                            <button id="btnSubmit" type="submit" title="Imprimir" class="btn btn-primary btn-block mt-4"><i class="fa fa-print"></i></button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div id="containerRelatorio" class="card-body">
+            <p class="lead pt-3 text-center">Nenhum relatório foi visualizado.</p>
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    <!-- Page level plugins -->
+    @Scripts.Render("~/plugin/autocomplete/js")
+
+    <!-- Page level custom scripts -->
+    @Scripts.Render("~/views/pagarreceber/relatoriofluxocaixa/js")
+
+    <script type="text/javascript">
+        $('.selectpicker').selectpicker({
+            noneSelectedText: 'Selecione...'
+        });
+
+        $(document).ready(function () {
+            $("#menu-relatorio").addClass("active");
+        });
+    </script>
+}

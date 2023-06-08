@@ -1,0 +1,102 @@
+﻿table.dataTable tbody tr td, .table tbody tr td {
+    padding: .40em .70em;
+    vertical-align: middle !important;
+    /*font-size: 0.8em;*/
+}
+
+.table > thead > tr > th {
+    font-size: 12px;
+}
+
+.table > tbody > tr > td {
+    font-size: 12px;
+}
+
+    .table > tbody > tr > td > .btn-link {
+        padding: 4px 6px;
+        font-size: 12px;
+    }
+
+.table tbody tr td input {
+    padding: 4px !important;
+    height: initial !important;
+    font-size: 14px !important;
+}
+
+table.dataTable tbody tr > td a, table.dataTable tbody tr > td button {
+    font-size: 1.1em;
+}
+
+.custom-checkbox > label {
+    cursor: pointer;
+}
+
+.validation-summary-errors ul > li {
+    padding-left: 0;
+    list-style: none;
+}
+
+.jq-icon-warning {
+    background-color: #FEC538;
+}
+
+.form-control-custom {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 2px 4px;
+    font-weight: bold;
+    font-size: 20px;
+    width: 100%;
+}
+
+.form-control-custom-small {
+    font-size: 16px;
+}
+
+.form-control {
+    border: 2px solid #ddd;
+}
+
+.form-control-custom:focus {
+    outline: none;
+}
+
+.form-control-custom:disabled {
+    color: #bbb;
+}
+
+.bootstrap-select {
+    border: 2px solid #ddd !important;
+    box-shadow: none !important;
+}
+
+    .bootstrap-select select, .bootstrap-select select:focus {
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        -webkit-box-shadow: none !important;
+        outline-width: 0 !important;
+        outline: none !important;
+    }
+
+    .bootstrap-select button, .bootstrap-select button:focus {
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        -webkit-box-shadow: none !important;
+        outline-width: 0 !important;
+        outline: none !important;
+    }
+
+.width-150 {
+    width: 150px !important;
+}
+
+select > option[disabled] {
+    color: #ccc;
+}
+
+.dropdown.bootstrap-select.disabled {
+    background-color: #eaecf4;
+}

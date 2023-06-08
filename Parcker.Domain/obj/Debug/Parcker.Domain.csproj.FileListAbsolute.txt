@@ -1,0 +1,16 @@
+C:\DEV\Parcker\Parcker.Domain\bin\Debug\Parcker.Domain.dll
+C:\DEV\Parcker\Parcker.Domain\bin\Debug\Parcker.Domain.pdb
+C:\DEV\Parcker\Parcker.Domain\obj\Debug\Parcker.Domain.csproj.CoreCompileInputs.cache
+C:\DEV\Parcker\Parcker.Domain\obj\Debug\Parcker.Domain.dll
+C:\DEV\Parcker\Parcker.Domain\obj\Debug\Parcker.Domain.pdb
+D:\DEV\Parcker\Parcker.Domain\bin\Debug\Parcker.Domain.dll
+D:\DEV\Parcker\Parcker.Domain\bin\Debug\Parcker.Domain.pdb
+D:\DEV\Parcker\Parcker.Domain\obj\Debug\Parcker.Domain.csproj.CoreCompileInputs.cache
+D:\DEV\Parcker\Parcker.Domain\obj\Debug\Parcker.Domain.dll
+D:\DEV\Parcker\Parcker.Domain\obj\Debug\Parcker.Domain.pdb
+D:\DEV\Parcker\Parcker.Domain\obj\Debug\Parcker.Domain.csprojAssemblyReference.cache
+C:\DEV\Projetos\Parcker\Parcker.Domain\bin\Debug\Parcker.Domain.dll
+C:\DEV\Projetos\Parcker\Parcker.Domain\bin\Debug\Parcker.Domain.pdb
+C:\DEV\Projetos\Parcker\Parcker.Domain\obj\Debug\Parcker.Domain.csprojAssemblyReference.cache
+C:\DEV\Projetos\Parcker\Parcker.Domain\obj\Debug\Parcker.Domain.dll
+C:\DEV\Projetos\Parcker\Parcker.Domain\obj\Debug\Parcker.Domain.pdb

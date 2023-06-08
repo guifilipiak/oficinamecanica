@@ -1,0 +1,145 @@
+﻿@model Parcker.Models.ProdutoModel
+
+@{
+    /**/
+
+    ViewBag.Title = "Produto";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<!-- Begin Page Content -->
+<div class="container-fluid">
+
+    <!-- Page Heading -->
+    <h1 class="h3 mb-2 text-gray-800">Produtos</h1>
+    <p id="page-title" class="mb-4">
+        @if (Model != null & Model.Id != 0)
+        {
+            <text>
+                Editando registro n° @Model.Id
+            </text>
+        }
+        else
+        {
+            <text>
+                Inserindo novo registro
+            </text>
+        }
+    </p>
+
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            @using (Ajax.BeginForm(new AjaxOptions()
+            {
+                HttpMethod = "POST",
+                AllowCache = false,
+                LoadingElementId = "preloader-geral",
+                LoadingElementDuration = 1000,
+                OnBegin = "formBegin",
+                OnComplete = "formComplete",
+                OnSuccess = "formSuccess",
+                OnFailure = "formFailure"
+            }))
+            {
+                @Html.AntiForgeryToken()
+                @Html.HiddenFor(model => model.Id)
+                @Html.HiddenFor(model => model.DataCriacao)
+
+                <div class="row">
+                    <div class="form-group col-md-6">
+                        @Html.LabelFor(model => model.Nome, htmlAttributes: new { @class = "control-label" })
+                        @Html.EditorFor(model => model.Nome, new { htmlAttributes = new { @class = "form-control" } })
+                        @Html.ValidationMessageFor(model => model.Nome, "", new { @class = "text-danger" })
+                    </div>
+                    <div class="form-group col-md-2">
+                        @Html.LabelFor(model => model.Estoque, htmlAttributes: new { @class = "control-label" })
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <div class="input-group-text"><i class="fa fa-boxes"></i></div>
+                            </div>
+                            @Html.TextBoxFor(model => model.Estoque, new { @class = "form-control numero text-right" })
+                        </div>
+                        @Html.ValidationMessageFor(model => model.Estoque, "", new { @class = "text-danger" })
+                    </div>
+                    <div class="form-group col-md-2">
+                        @Html.LabelFor(model => model.ValorUnitario, htmlAttributes: new { @class = "control-label" })
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <div class="input-group-text">R$</div>
+                            </div>
+                            @Html.TextBoxFor(model => model.ValorUnitario, "{0:N2}", new { @class = "form-control decimal text-right" })
+                        </div>
+                        @Html.ValidationMessageFor(model => model.ValorUnitario, "", new { @class = "text-danger" })
+                    </div>
+                    <div class="form-group col-md-2 mt-4 pt-2">
+                        <div class="custom-control custom-checkbox btn btn-link">
+                            @Html.CheckBoxFor(model => model.Ativo, new { @class = "custom-control-input" })
+                            @Html.LabelFor(model => model.Ativo, htmlAttributes: new { @class = "custom-control-label" })
+                        </div>
+                        @Html.ValidationMessageFor(model => model.Ativo, "", new { @class = "text-danger" })
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-md-12">
+                        @Html.LabelFor(model => model.Descricao, htmlAttributes: new { @class = "control-label" })
+                        @Html.EditorFor(model => model.Descricao, new { htmlAttributes = new { @class = "form-control" } })
+                        @Html.ValidationMessageFor(model => model.Descricao, "", new { @class = "text-danger" })
+                    </div>
+                    <div class="form-group col-md-4">
+                        @Html.LabelFor(model => model.IdMarca, htmlAttributes: new { @class = "control-label" })
+                        @Html.DropDownListFor(model => model.IdMarca, ViewBag.Marcas as IEnumerable<SelectListItem>, "Selecione uma marca", new { @class = "form-control" })
+                        @Html.ValidationMessageFor(model => model.IdMarca, "", new { @class = "text-danger" })
+                    </div>
+                    <div class="form-group col-md-8">
+                        @Html.LabelFor(model => model.IdFornecedor, htmlAttributes: new { @class = "control-label" })
+                        @Html.DropDownListFor(model => model.IdFornecedor, ViewBag.Fornecedores as IEnumerable<SelectListItem>, "Selecione um fornecedor", new { @class = "form-control" })
+                        @Html.ValidationMessageFor(model => model.IdFornecedor, "", new { @class = "text-danger" })
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-md-2">
+                        @Html.LabelFor(model => model.CodigoExterno, htmlAttributes: new { @class = "control-label" })
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <div class="input-group-text"><i class="fa fa-globe"></i></div>
+                            </div>
+                            @Html.TextBoxFor(model => model.CodigoExterno, new { @class = "form-control text-right" })
+                        </div>
+                        @Html.ValidationMessageFor(model => model.CodigoExterno, "", new { @class = "text-danger" })
+                    </div>
+                    <div class="form-group col-md-4">
+                        @Html.LabelFor(model => model.CodigoBarras, htmlAttributes: new { @class = "control-label" })
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <div class="input-group-text"><i class="fa fa-barcode"></i></div>
+                            </div>
+                            @Html.TextBoxFor(model => model.CodigoBarras, new { @class = "form-control text-right" })
+                        </div>
+                        @Html.ValidationMessageFor(model => model.CodigoBarras, "", new { @class = "text-danger" })
+                    </div>
+                    <div class="form-group col-md-4 mt-4 pt-2">
+                        <div class="custom-control custom-checkbox btn btn-link">
+                            @Html.CheckBoxFor(model => model.AlertaEstoqueMinimo, new { @class = "custom-control-input" })
+                            @Html.LabelFor(model => model.AlertaEstoqueMinimo, htmlAttributes: new { @class = "custom-control-label" })
+                        </div>
+                        @Html.ValidationMessageFor(model => model.AlertaEstoqueMinimo, "", new { @class = "text-danger" })
+                    </div>
+                    <div class="form-group col-md-2">
+                        @Html.LabelFor(model => model.EstoqueMinimo, htmlAttributes: new { @class = "control-label" })
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <div class="input-group-text"><i class="fa fa-boxes"></i></div>
+                            </div>
+                            @Html.TextBoxFor(model => model.EstoqueMinimo, new { @class = "form-control numero text-right" })
+                        </div>
+                        @Html.ValidationMessageFor(model => model.EstoqueMinimo, "", new { @class = "text-danger" })
+                    </div>
+                </div>
+                <br />
+                <div class="form-group text-right">
+                    @Html.ActionLink("Retornar para a lista", "Index", null, new { @class = "btn btn-link" })
+                    <button type="submit" class="btn btn-success"><i class="fa fa-save"></i>&nbsp;Salvar Alterações</button>
+                </div>
+            }
+        </div>
+    </div>
+</div>

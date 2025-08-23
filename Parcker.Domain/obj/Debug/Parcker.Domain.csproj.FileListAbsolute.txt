@@ -14,3 +14,9 @@ C:\DEV\Projetos\Parcker\Parcker.Domain\bin\Debug\Parcker.Domain.pdb
 C:\DEV\Projetos\Parcker\Parcker.Domain\obj\Debug\Parcker.Domain.csprojAssemblyReference.cache
 C:\DEV\Projetos\Parcker\Parcker.Domain\obj\Debug\Parcker.Domain.dll
 C:\DEV\Projetos\Parcker\Parcker.Domain\obj\Debug\Parcker.Domain.pdb
+D:\repo\parcker\oficinamecanica\Parcker.Domain\bin\Debug\Parcker.Domain.dll
+D:\repo\parcker\oficinamecanica\Parcker.Domain\bin\Debug\Parcker.Domain.pdb
+D:\repo\parcker\oficinamecanica\Parcker.Domain\obj\Debug\Parcker.Domain.csproj.AssemblyReference.cache
+D:\repo\parcker\oficinamecanica\Parcker.Domain\obj\Debug\Parcker.Domain.csproj.CoreCompileInputs.cache
+D:\repo\parcker\oficinamecanica\Parcker.Domain\obj\Debug\Parcker.Domain.dll
+D:\repo\parcker\oficinamecanica\Parcker.Domain\obj\Debug\Parcker.Domain.pdb

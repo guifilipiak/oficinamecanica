@@ -9,3 +9,9 @@ C:\DEV\Projetos\Parcker\Parcker.Common\bin\Debug\Parcker.Common.pdb
 C:\DEV\Projetos\Parcker\Parcker.Common\obj\Debug\Parcker.Common.csprojAssemblyReference.cache
 C:\DEV\Projetos\Parcker\Parcker.Common\obj\Debug\Parcker.Common.dll
 C:\DEV\Projetos\Parcker\Parcker.Common\obj\Debug\Parcker.Common.pdb
+D:\repo\parcker\oficinamecanica\Parcker.Common\bin\Debug\Parcker.Common.dll
+D:\repo\parcker\oficinamecanica\Parcker.Common\bin\Debug\Parcker.Common.pdb
+D:\repo\parcker\oficinamecanica\Parcker.Common\obj\Debug\Parcker.Common.csproj.AssemblyReference.cache
+D:\repo\parcker\oficinamecanica\Parcker.Common\obj\Debug\Parcker.Common.csproj.CoreCompileInputs.cache
+D:\repo\parcker\oficinamecanica\Parcker.Common\obj\Debug\Parcker.Common.dll
+D:\repo\parcker\oficinamecanica\Parcker.Common\obj\Debug\Parcker.Common.pdb

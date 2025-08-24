@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Mail;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Parcker.Common
 {
@@ -22,37 +19,43 @@ namespace Parcker.Common
             _usuario = usuario;
             _senha = senha;
             _servidor = servidor;
+            _porta = porta;
         }
 
-        public void EnviarEmail(string[] destinatarios, string assunto, string mensagem, Dictionary<string, Stream> arquivo)
+        public void EnviarEmail(string[] destinatarios, string assunto, string mensagem, Dictionary<string, Stream> arquivo = null)
         {
-            SmtpClient client = new SmtpClient();
-            client.Host = _servidor;
-            client.EnableSsl = true;
-            client.Port = _porta.HasValue ? _porta.Value : 587;
-            client.Credentials = new NetworkCredential()
+            using (var client = new SmtpClient())
             {
-                UserName = _usuario,
-                Password = _senha
-            };
+                client.Host = _servidor;
+                client.EnableSsl = true;
+                client.Port = _porta ?? 587;
+                client.Credentials = new NetworkCredential(_usuario, _senha);
 
-            MailMessage message = new MailMessage();
-            message.IsBodyHtml = true;
-            message.Priority = MailPriority.High;
-            message.Body = mensagem;
-            message.From = new MailAddress(_remetente);
-            message.To.Add(string.Join(",", destinatarios));
-            message.Subject = assunto;
-
-            if (arquivo.Count > 0)
-            {
-                foreach (var file in arquivo)
+                using (var message = new MailMessage())
                 {
-                    message.Attachments.Add(new Attachment(file.Value, file.Key));
+                    message.IsBodyHtml = true;
+                    message.Priority = MailPriority.High;
+                    message.Body = mensagem;
+                    message.From = new MailAddress(_remetente);
+
+                    foreach (var destinatario in destinatarios)
+                    {
+                        message.To.Add(destinatario);
+                    }
+
+                    message.Subject = assunto;
+
+                    if (arquivo != null && arquivo.Count > 0)
+                    {
+                        foreach (var file in arquivo)
+                        {
+                            message.Attachments.Add(new Attachment(file.Value, file.Key));
+                        }
+                    }
+
+                    client.Send(message);
                 }
             }
-
-            client.Send(message);
         }
     }
 }

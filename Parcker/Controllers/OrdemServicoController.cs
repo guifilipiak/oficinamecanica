@@ -518,23 +518,23 @@ namespace Parcker.Controllers
                 try
                 {
                     var configuracao = entity.All<ConfiguracaoEmail>().FirstOrDefault();
+                    if (configuracao == null)
+                        return Json(new { IsValid = false, IsHaveEmail = true, Message = "Configuração de e-mail não encontrada!" });
+
                     var os = entity.GetById<OrdemServico>(id);
                     var usuario = entity.All<Usuario>().Where(x => x.Nome == User.Identity.Name).FirstOrDefault();
 
-                    var nome_cliente = os.Cliente.Pessoa.Nome;
-                    var valor_total = os.Total.ToString("N2");
-
                     if (string.IsNullOrEmpty(destinatario))
                         destinatario = os.Cliente.Pessoa.Email;
+
+                    if (string.IsNullOrWhiteSpace(destinatario))
+                        return Json(new { IsValid = false, IsHaveEmail = false, Message = "Cliente não possui e-mail cadastrado!" });
 
                     var model = new PrinterOSModel()
                     {
                         OrdemServico = os,
                         Usuario = usuario
                     };
-
-                    if (string.IsNullOrWhiteSpace(model.OrdemServico.Cliente.Pessoa.Email) && string.IsNullOrWhiteSpace(destinatario))
-                        return Json(new { IsValid = false, IsHaveEmail = false, Message = "Cliente não possui e-mail cadastrado!" });
 
                     ControllerContext.RouteData.Values.Add("gerarPDF", true);
 
@@ -547,30 +547,30 @@ namespace Parcker.Controllers
                         Model = model
                     }.BuildFile(ControllerContext);
 
-                    Email email = new Email(configuracao.Servidor, configuracao.Porta, configuracao.Remetente, configuracao.Usuario, configuracao.Senha);
+                    var email = new Email(configuracao.Servidor, configuracao.Porta, configuracao.Remetente, configuracao.Usuario, configuracao.Senha);
                     var file = new Dictionary<string, Stream>();
+                    var ms = new MemoryStream(pdf);
+                    
+                    file.Add($"Impressao_OrdemServico_N{id}.pdf", ms);
 
-                    using (var ms = new MemoryStream(pdf))
-                    {
-                        file.Add($"Impressao_OrdemServico_N{id}.pdf", ms);
+                    var nome_cliente = os.Cliente.Pessoa.Nome;
+                    var valor_total = os.Total.ToString("N2");
+                    var texto = Resources.EmailTemplate.Replace("%cliente%", nome_cliente).Replace("%txt1%", "Aqui está sua ordem de serviço, qualquer dúvida entre em contato.").Replace("%txt2%", $"OS N°: <b>{id}</b>").Replace("%txt3%", $"Valor Total: R$ {valor_total}");
 
-                        var texto = Resources.EmailTemplate.Replace("%cliente%", nome_cliente).Replace("%txt1%", "Aqui está sua ordem de serviço, qualquer dúvida entre em contato.").Replace("%txt2%", $"OS N°: <b>{id}</b>").Replace("%txt3%", $"Valor Total: R$ {valor_total}");
+                    email.EnviarEmail(
+                        new[] { destinatario },
+                        $"Parcker Auto Center - Ordem de Serviço N° {id}",
+                        texto,
+                        file
+                    );
 
-                        email.EnviarEmail(
-                            new[] { destinatario },
-                            $"Parcker Auto Center - Ordem de Serviço N° {id}",
-                            texto,
-                            file
-                        );
-                    }
+                    return Json(new { IsValid = true, IsHaveEmail = true, Message = "E-mail enviado com sucesso!" });
                 }
                 catch (Exception ex)
                 {
                     return Json(new { IsValid = false, IsHaveEmail = true, Message = "Falha ao tentar enviar e-mail!" });
                 }
             }
-
-            return Json(new { IsValid = true, IsHaveEmail = true, Message = "E-mail enviado com sucesso!" });
         }
 
         public JsonResult ObterVeiculo(int id)

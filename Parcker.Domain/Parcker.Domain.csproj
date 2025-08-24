@@ -63,6 +63,7 @@
     <Compile Include="SituacaoConta.cs" />
     <Compile Include="FormasPagamento.cs" />
     <Compile Include="Classificacao.cs" />
+    <Compile Include="TipoAtendimento.cs" />
     <Compile Include="TipoConta.cs" />
     <Compile Include="Usuario.cs" />
     <Compile Include="Veiculo.cs" />

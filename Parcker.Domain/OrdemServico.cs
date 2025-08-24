@@ -17,11 +17,14 @@ namespace Parcker.Domain
         public virtual decimal Total { get; set; }
         public virtual int? KM { get; set; }
         public virtual int IdSituacaoServico { get; set; }
-        public virtual int IdVeiculo { get; set; }
+        public virtual int? IdVeiculo { get; set; }
         public virtual int? IdCupomDesconto { get; set; }
-        public virtual int IdCliente { get; set; }
+        public virtual int? IdCliente { get; set; }
+        public virtual int IdTipoAtendimento { get; set; }
+        public virtual DateTime? DataValidadeOrcamento { get; set; }
 
         public virtual SituacaoServico SituacaoServico { get; set; }
+        public virtual TipoAtendimento TipoAtendimento { get; set; }
         public virtual Veiculo Veiculo { get; set; }
         public virtual CupomDesconto CupomDesconto { get; set; }
         public virtual Cliente Cliente { get; set; }

@@ -25,18 +25,19 @@ $(document).ready(function () {
                 { title: 'Descrição', data: 'DescricaoServico' },
                 { title: 'Cliente', data: 'Cliente' },
                 { title: 'Veiculo', data: 'Veiculo' },
+                { title: 'Tipo', data: 'TipoAtendimento', width: "80px" },
                 { title: 'Situação', data: 'SituacaoServico' },
                 { title: 'Total', data: 'Total' },
                 {
                     title: 'Pagamento',
                     data: 'Pagamento',
-                    width: "60px",
+                    width: "100px",
                     className: "text-center",
                     render: function (data, type, row) {
                         switch (data) {
                             default:
                             case "EM PROCESSO":
-                                return '<span class="badge badge-secondary text-center">EM PROCESSO</span>';
+                                return '<span class="badge badge-secondary">EM PROCESSO</span>';
                             case "PAGO":
                                 return '<span class="badge badge-success">PAGO</span>';
                             case "PENDENTE":
@@ -49,12 +50,24 @@ $(document).ready(function () {
                 {
                     title: '',
                     data: 'Id',
-                    width: "190px",
+                    width: "80px",
+                    className: "text-center",
                     render: function (data, type, row) {
-                        var buttons = "<a href='" + URLBase + "OrdemServico/Printer/" + data + "?gerarPDF=False' target='_blank' class='btn btn-link'><i class='fa fa-print'></i>&nbsp;Imprimir</a>" +
-                            "<a href='" + URLBase + "OrdemServico/Edit/" + data + "' class='btn btn-link'><i class='fa fa-edit'></i>&nbsp;Editar</a>" +
-                            '<button class="btn btn-link" onclick="confirmDelete(\'OrdemServico/Delete\',' + data + ', function () { $(\'#dataTable\').DataTable().ajax.reload(); })"><i class="fa fa-trash"></i>&nbsp;Remover</button>';
-                        return buttons;
+                        var dropdown = '<div class="dropdown">' +
+                            '<button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown">Ações</button>' +
+                            '<div class="dropdown-menu">' +
+                            '<a class="dropdown-item" href="' + URLBase + 'OrdemServico/Printer/' + data + '?gerarPDF=False" target="_blank"><i class="fa fa-print"></i> Imprimir</a>' +
+                            '<a class="dropdown-item" href="' + URLBase + 'OrdemServico/Edit/' + data + '"><i class="fa fa-edit"></i> Editar</a>';
+                        
+                        if (row.Pagamento == "PENDENTE") {
+                            dropdown += '<a class="dropdown-item" href="' + URLBase + 'OrdemServico/Edit/' + data + '"><i class="fa fa-money-bill"></i> Informar Pagamento</a>';
+                        }
+                        
+                        dropdown += '<div class="dropdown-divider"></div>' +
+                            '<a class="dropdown-item text-danger" href="#" onclick="confirmDelete(\'OrdemServico/Delete\',' + data + ', function () { $(\'#dataTable\').DataTable().ajax.reload(); })"><i class="fa fa-trash"></i> Remover</a>' +
+                            '</div></div>';
+                        
+                        return dropdown;
                     }
                 }
             ],
@@ -77,8 +90,17 @@ $(document).ready(function () {
     } else {
         if ($("#IdSituacaoServico").val() == "5" && $("#PagamentoRecebido").val() == "False") {
             $("#IdOrdemServico").val($("#Id").val());
-            $("#Valor").val($("#Total").val());
+            // Calcular saldo (Total - Entrada) para o valor padrão
+            var total = decimalFormat($("#Total").val());
+            var entrada = decimalFormat($("#Entrada").val());
+            var saldoOS = total - entrada;
+            $("#Valor").val(decimalFormat(saldoOS, "pt-BR"));
             $("#modalPagamento").modal("show");
+
+            // Calcular saldo inicial quando a modal abrir
+            $("#modalPagamento").on('shown.bs.modal', function () {
+                calculaSaldo();
+            });
 
             $("#formItemPagamento").submit(function (e) {
                 e.preventDefault();
@@ -222,16 +244,23 @@ $(document).ready(function () {
 
 function calculaSaldo() {
     var total = decimalFormat($("#Total").val());
+    var entrada = decimalFormat($("#Entrada").val());
+    var saldoOS = total - entrada;
     var totalLinhas = 0;
     var saldo = 0;
     var rows = $("#tableItemPagamento").find("tbody tr");
+    var hasItems = false;
+
     if (rows.find("td[data-index=0]").length == 0) {
+        hasItems = true;
         for (var i = 0; i < rows.length; i++) {
             totalLinhas += decimalFormat($(rows[i]).find("#Valor").val());
         }
     }
-    saldo = total - totalLinhas;
-    if (saldo <= total && saldo != 0) {
+
+    saldo = saldoOS - totalLinhas;
+
+    if (saldo <= saldoOS && saldo != 0) {
         $("#saldoPagamento").removeClass("text-success");
         $("#saldoPagamento").addClass("text-danger");
         $("#saldoPagamento").parent().removeClass("text-success");
@@ -246,7 +275,7 @@ function calculaSaldo() {
 
     $("#saldoPagamento").html(decimalFormat(saldo, 'pt-BR'));
 
-    if (saldo == 0) {
+    if (hasItems && saldo == 0) {
         $("#btnSubmitModal").prop("disabled", false);
         $("#btnAddFormaPagamento").prop("disabled", true);
     }
@@ -462,6 +491,12 @@ function callback(type, result) {
     switch (type) {
         case "success":
             if (result.IsValid) {
+                // Se é um retorno de pagamento, fechar modal
+                if (result.Pagamento) {
+                    $("#modalPagamento").modal("hide");
+                    return;
+                }
+
                 if (result.Data != "") {
                     for (var i = 0; i < result.Data.Itens.length; i++) {
                         var rowItem = $("#tableItens").find("tbody tr[data-index=\"" + result.Data.Itens[i].Index + "\"]");
@@ -475,11 +510,12 @@ function callback(type, result) {
                         disableForm();
                     }
 
-                    if (result.Data.IdSituacaoServico == 5) {
+                    // Só abre modal se status = 5 (Finalizado) E não tem pagamento registrado
+                    if (result.Data.IdSituacaoServico == 5 && $("#PagamentoRecebido").val() == "False") {
                         $("#IdOrdemServico").val(result.Data.Id);
                         $("#Valor").val(decimalFormat(result.Data.Total, "pt-BR"));
                         $("#DataPagamento").val(JSONDatePtBr(result.Data.DataFinalizacao));
-                        $("#modalPagamento").modal("show");
+                        //$("#modalPagamento").modal("show");
                     }
                 } else {
                     $("#modalPagamento").modal("hide");

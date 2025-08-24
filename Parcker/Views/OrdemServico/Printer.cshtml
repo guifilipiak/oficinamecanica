@@ -1,4 +1,4 @@
-﻿@model Parcker.Models.PrinterOSModel
+@model Parcker.Models.PrinterOSModel
 @using Parcker.Models.Enums
 @{
     Layout = null;
@@ -7,6 +7,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width" />
     <title>Impressão de OS - Oficina Parcker</title>
     @Styles.Render("~/impressao/css")
@@ -24,9 +25,30 @@
             table > thead > tr > th {
                 padding: 4px 6px !important;
             }
+
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin-left: -350px; /* metade da largura aproximada */
+            margin-top: -60px; /* metade da altura aproximada */
+            font-size: 120px;
+            color: rgba(0,0,0,0.07);
+            z-index: 1;
+            font-weight: bold;
+            pointer-events: none;
+            white-space: nowrap;
+            transform: rotate(45deg); /* alguns wkhtmltopdf aceitam só rotate */
+            -webkit-transform: rotate(45deg);
+            -webkit-transform-origin: center;
+        }
     </style>
 </head>
 <body class="container">
+    @if (Model.OrdemServico.IdTipoAtendimento == 2)
+    {
+        <div class="watermark">ORÇAMENTO</div>
+    }
 
     <section class="sheet padding-10mm">
         <div class="text-right no-print">
@@ -82,54 +104,60 @@
                     </td>
             </table>
         </article>
-        <h4>Ordem de Serviço n° @Model.OrdemServico.Id</h4>
+        <h4>@(Model.OrdemServico.IdTipoAtendimento == 1 ? "Ordem de Serviço" : "Orçamento") n° @Model.OrdemServico.Id</h4>
         <p class="text-left">
-            <small>OS criada em: @Model.OrdemServico.DataCriacao.ToLongDateString()</small>
+            <small>@(Model.OrdemServico.IdTipoAtendimento == 1 ? "OS" : "Orçamento") criado em: @Model.OrdemServico.DataCriacao.ToLongDateString()</small>
         </p>
         <hr class="mt-2 mb-0" />
         <table class="table table-borderless">
             <tr>
-                <td width="250" class="text-left pl-0">
-                    <p class="lead mb-0">Cliente</p>
-                    <div>
-                        @if (Model.OrdemServico.Cliente.Pessoa.Tipo == (int)TipoPessoaEnum.Fisica)
-                        {
-                            <text>
-                                Nome:&nbsp;&nbsp;@Model.OrdemServico.Cliente.Pessoa.Nome<br />
-                                CPF:&nbsp;&nbsp;@Model.OrdemServico.Cliente.Pessoa.CPF<br />
-                                Telefone:&nbsp;&nbsp;@(Model.OrdemServico.Cliente.Pessoa.Telefone1 + " | " + Model.OrdemServico.Cliente.Pessoa.Telefone2)<br />
-                                Endereço:&nbsp;&nbsp;@(Model.OrdemServico.Cliente.Pessoa.Endereco + ", n° " + Model.OrdemServico.Cliente.Pessoa.Numero + ", " + Model.OrdemServico.Cliente.Pessoa.Bairro + " - " + Model.OrdemServico.Cliente.Pessoa.Cidade + "/" + Model.OrdemServico.Cliente.Pessoa.UF)<br />
-                            </text>
-                        }
-                        else
-                        {
-                            <text>
-                                Razão Social:&nbsp;&nbsp;@Model.OrdemServico.Cliente.Pessoa.RazaoSocial<br />
-                                CNPJ:&nbsp;&nbsp;@Model.OrdemServico.Cliente.Pessoa.CNPJ<br />
-                                Telefone:&nbsp;&nbsp;@(Model.OrdemServico.Cliente.Pessoa.Telefone1 + " | " + Model.OrdemServico.Cliente.Pessoa.Telefone2)<br />
-                                Endereço:&nbsp;&nbsp;@(Model.OrdemServico.Cliente.Pessoa.Endereco + ", n° " + Model.OrdemServico.Cliente.Pessoa.Numero + ", " + Model.OrdemServico.Cliente.Pessoa.Bairro + " - " + Model.OrdemServico.Cliente.Pessoa.Cidade + "/" + Model.OrdemServico.Cliente.Pessoa.UF)<br />
-                            </text>
-                        }
-                    </div>
-                </td>
-                <td width="250" class="text-left pl-0">
-                    <p class="lead mb-0">Veículo</p>
-                    <table class="table table-borderless" style="padding:0;margin:0">
-                        <tr>
-                            <td style="padding:0;margin:0">
-                                Placa:&nbsp;&nbsp;@Model.OrdemServico.Veiculo.Placa<br />
-                                Marca:&nbsp;&nbsp;@(Model.OrdemServico.Veiculo.Marca?.Descricao)<br />
-                                Ano:&nbsp;&nbsp;@Model.OrdemServico.Veiculo.Ano<br />
-                                KM:&nbsp;&nbsp;@Model.OrdemServico.KM
-                            </td>
-                            <td style="padding:0;margin:0">
-                                Renavam:&nbsp;&nbsp;@Model.OrdemServico.Veiculo.Renavam<br />
-                                Modelo:&nbsp;&nbsp;@Model.OrdemServico.Veiculo.Modelo<br />
-                                Cor:&nbsp;&nbsp;@Model.OrdemServico.Veiculo.Cor<br />
-                            </td>
-                        </tr>
-                    </table>
-                </td>
+                @if (Model.OrdemServico.Cliente != null)
+                {
+                    <td width="250" class="text-left pl-0">
+                        <p class="lead mb-0">Cliente</p>
+                        <div>
+                            @if (Model.OrdemServico.Cliente.Pessoa.Tipo == (int)TipoPessoaEnum.Fisica)
+                            {
+                                <text>
+                                    Nome:&nbsp;&nbsp;@Model.OrdemServico.Cliente.Pessoa.Nome<br />
+                                    CPF:&nbsp;&nbsp;@Model.OrdemServico.Cliente.Pessoa.CPF<br />
+                                    Telefone:&nbsp;&nbsp;@(Model.OrdemServico.Cliente.Pessoa.Telefone1 + " | " + Model.OrdemServico.Cliente.Pessoa.Telefone2)<br />
+                                    Endereço:&nbsp;&nbsp;@(Model.OrdemServico.Cliente.Pessoa.Endereco + ", n° " + Model.OrdemServico.Cliente.Pessoa.Numero + ", " + Model.OrdemServico.Cliente.Pessoa.Bairro + " - " + Model.OrdemServico.Cliente.Pessoa.Cidade + "/" + Model.OrdemServico.Cliente.Pessoa.UF)<br />
+                                </text>
+                            }
+                            else
+                            {
+                                <text>
+                                    Razão Social:&nbsp;&nbsp;@Model.OrdemServico.Cliente.Pessoa.RazaoSocial<br />
+                                    CNPJ:&nbsp;&nbsp;@Model.OrdemServico.Cliente.Pessoa.CNPJ<br />
+                                    Telefone:&nbsp;&nbsp;@(Model.OrdemServico.Cliente.Pessoa.Telefone1 + " | " + Model.OrdemServico.Cliente.Pessoa.Telefone2)<br />
+                                    Endereço:&nbsp;&nbsp;@(Model.OrdemServico.Cliente.Pessoa.Endereco + ", n° " + Model.OrdemServico.Cliente.Pessoa.Numero + ", " + Model.OrdemServico.Cliente.Pessoa.Bairro + " - " + Model.OrdemServico.Cliente.Pessoa.Cidade + "/" + Model.OrdemServico.Cliente.Pessoa.UF)<br />
+                                </text>
+                            }
+                        </div>
+                    </td>
+                }
+                @if (Model.OrdemServico.Veiculo != null)
+                {
+                    <td width="250" class="text-left pl-0">
+                        <p class="lead mb-0">Veículo</p>
+                        <table class="table table-borderless" style="padding:0;margin:0">
+                            <tr>
+                                <td style="padding:0;margin:0">
+                                    Placa:&nbsp;&nbsp;@Model.OrdemServico.Veiculo.Placa<br />
+                                    Marca:&nbsp;&nbsp;@(Model.OrdemServico.Veiculo.Marca?.Descricao)<br />
+                                    Ano:&nbsp;&nbsp;@Model.OrdemServico.Veiculo.Ano<br />
+                                    KM:&nbsp;&nbsp;@Model.OrdemServico.KM
+                                </td>
+                                <td style="padding:0;margin:0">
+                                    Renavam:&nbsp;&nbsp;@Model.OrdemServico.Veiculo.Renavam<br />
+                                    Modelo:&nbsp;&nbsp;@Model.OrdemServico.Veiculo.Modelo<br />
+                                    Cor:&nbsp;&nbsp;@Model.OrdemServico.Veiculo.Cor<br />
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                }
             </tr>
         </table>
         <hr class="mt-0 mb-2" />
@@ -224,6 +252,12 @@
                 </td>
             </tr>
         </table>
+        @if (Model.OrdemServico.IdTipoAtendimento == 2 && Model.OrdemServico.DataValidadeOrcamento.HasValue)
+        {
+            <div class="text-center mt-4">
+                <p><strong>Validade do Orcamento: @Model.OrdemServico.DataValidadeOrcamento.Value.ToString("dd/MM/yyyy")</strong></p>
+            </div>
+        }
     </section>
     <script type="text/javascript">
         var URLBase = "@(Url.Content("~/"))";

@@ -92,6 +92,10 @@ body.A5.landscape .sheet {
 
 /** Fix for Chrome issue #273306 **/
 @media print {
+    body {
+        font-family: Arial, Helvetica, sans-serif !important;
+    }
+
     body.A3.landscape {
         width: 420mm
     }

@@ -3,7 +3,8 @@
 @model Parcker.Models.OrdemServicoModel
 
 @{
-    ViewBag.Title = "Ordem de Serviço";
+    var tipoTexto = ViewBag.Tipo == 1 ? "Ordem de Serviço" : "Orçamento";
+    ViewBag.Title = tipoTexto;
     Layout = "~/Views/Shared/_Layout.cshtml";
     var bEditar = Model.IdSituacaoServico != (int)SituacaoServicoEnum.Finalizado && Model.IdSituacaoServico != (int)SituacaoServicoEnum.Cancelado;
 }
@@ -18,7 +19,7 @@
     <!-- Page Heading -->
     <div class="d-sm-flex align-items-center justify-content-between mb-0">
         <div class="m-0 p-0">
-            <h1 class="h3 mb-0 text-gray-800">Ordem de Serviço</h1>
+            <h1 class="h3 mb-0 text-gray-800">@tipoTexto</h1>
             <p id="page-title" class="mb-4">
                 @if (Model != null & Model.Id != 0)
                 {
@@ -34,7 +35,14 @@
                 }
             </p>
         </div>
-        <a id="linkPrinter" href="@Url.Action("Printer", new { id = Model.Id, gerarPDF = false })" target="_blank" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm" style="margin-top:-20px"><i class="fas fa-print fa-sm text-white-50"></i> Imprimir OS</a>
+        <div style="margin-top:-20px">
+            <a id="linkPrinter" href="@Url.Action("Printer", new { id = Model.Id, gerarPDF = false })" target="_blank" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm" style="@(Model.Id > 0 ? "" : "display:none!important")"><i class="fas fa-print fa-sm text-white-50"></i> Imprimir @(ViewBag.Tipo == 1 ? "OS" : "Orçamento")</a>
+            
+            @if (ViewBag.Tipo == 2)
+            {
+                <button id="btnGerarOS" onclick="gerarOrdemServico(@Model.Id)" class="d-none d-sm-inline-block btn btn-sm btn-success shadow-sm ml-2" style="@(Model.Id > 0 ? "" : "display:none!important")"><i class="fas fa-wrench fa-sm text-white-50"></i> Gerar Ordem de Serviço</button>
+            }
+        </div>
     </div>
 
     @Html.Hidden("PagamentoRecebido", Model.HistoricoPagamentos != null && Model.HistoricoPagamentos.Count > 0)
@@ -55,7 +63,9 @@
         @Html.HiddenFor(model => model.Id)
         @Html.HiddenFor(model => model.DataCriacao)
         @Html.HiddenFor(model => model.DataFinalizacao)
+        @Html.HiddenFor(model => model.IdTipoAtendimento)
         @Html.Hidden("IdSituacaoServicoFunc", Model.IdSituacaoServico)
+        @Html.Hidden("tipo", (int)ViewBag.Tipo)
         <div class="row">
             <div class="col-xl-3 col-md-6 mb-4">
                 <div class="card border-left-primary shadow h-100">
@@ -130,13 +140,27 @@
                     @if (!bEditar)
                     {
                         <div class="form-group col-md-3">
-                            @Html.LabelFor(model => model.IdVeiculo, htmlAttributes: new { @class = "control-label" })
+                            @if (ViewBag.Tipo == 1)
+                            {
+                                @Html.LabelFor(model => model.IdVeiculo, htmlAttributes: new { @class = "control-label" })
+                            }
+                            else
+                            {
+                                <label class="control-label">Veículo (Opcional)</label>
+                            }
                             @Html.DropDownListFor(model => model.IdVeiculo, ViewBag.Veiculos as IEnumerable<SelectListItem>, "Selecione o veículo", new { @class = "form-control selectpicker-veiculos", @data_live_search = "true", @disabled = "disabled" })
                             @Html.ValidationMessageFor(model => model.IdVeiculo, "", new { @class = "text-danger" })
                         </div>
 
                         <div class="form-group col-md-2">
-                            @Html.LabelFor(model => model.KM, htmlAttributes: new { @class = "control-label" })
+                            @if (ViewBag.Tipo == 1)
+                            {
+                                @Html.LabelFor(model => model.KM, htmlAttributes: new { @class = "control-label" })
+                            }
+                            else
+                            {
+                                <label class="control-label">Kilometragem (Opcional)</label>
+                            }
                             <div class="input-group">
                                 <div class="input-group-prepend"><span class="input-group-text">KM</span></div>
                                 @Html.TextBoxFor(model => model.KM, new { @class = "form-control text-right" }.IsDisabled(true))
@@ -145,7 +169,14 @@
                         </div>
 
                         <div class="form-group col-md-4">
-                            @Html.LabelFor(model => model.IdCliente, htmlAttributes: new { @class = "control-label" })
+                            @if (ViewBag.Tipo == 1)
+                            {
+                                @Html.LabelFor(model => model.IdCliente, htmlAttributes: new { @class = "control-label" })
+                            }
+                            else
+                            {
+                                <label class="control-label">Cliente (Opcional)</label>
+                            }
                             @Html.DropDownListFor(model => model.IdCliente, ViewBag.Clientes as IEnumerable<SelectListItem>, "Selecione o cliente", new { @class = "form-control selectpicker-clientes", @data_live_search = "true", @disabled = "disabled" })
                             @Html.ValidationMessageFor(model => model.IdCliente, "", new { @class = "text-danger" })
                         </div>
@@ -159,7 +190,14 @@
                         </div>
 
                         <div class="form-group col-md-2">
-                            @Html.LabelFor(model => model.KM, htmlAttributes: new { @class = "control-label" })
+                            @if (ViewBag.Tipo == 1)
+                            {
+                                @Html.LabelFor(model => model.KM, htmlAttributes: new { @class = "control-label" })
+                            }
+                            else
+                            {
+                                <label class="control-label">Kilometragem (Opcional)</label>
+                            }
                             <div class="input-group">
                                 <div class="input-group-prepend"><span class="input-group-text">KM</span></div>
                                 @Html.TextBoxFor(model => model.KM, new { @class = "form-control text-right" }.IsDisabled(false))
@@ -174,11 +212,31 @@
                         </div>
                     }
 
-                    <div class="form-group col-md-3">
-                        @Html.LabelFor(model => model.IdSituacaoServico, htmlAttributes: new { @class = "control-label" })
-                        @Html.DropDownListFor(model => model.IdSituacaoServico, ViewBag.Situacoes as IEnumerable<SelectListItem>, "Selecione a Situação da OS", new { @class = "form-control" }.IsDisabled(!bEditar))
-                        @Html.ValidationMessageFor(model => model.IdSituacaoServico, "", new { @class = "text-danger" })
-                    </div>
+                    @if (ViewBag.Tipo == 1)
+                    {
+                        <div class="form-group col-md-3">
+                            @Html.LabelFor(model => model.IdSituacaoServico, htmlAttributes: new { @class = "control-label" })
+                            @Html.DropDownListFor(model => model.IdSituacaoServico, ViewBag.Situacoes as IEnumerable<SelectListItem>, "Selecione a Situação da OS", new { @class = "form-control" }.IsDisabled(!bEditar))
+                            @Html.ValidationMessageFor(model => model.IdSituacaoServico, "", new { @class = "text-danger" })
+                        </div>
+                    }
+                    else
+                    {
+                        @Html.HiddenFor(model => model.IdSituacaoServico)
+                    }
+
+                    @if (ViewBag.Tipo == 2)
+                    {
+                        <div class="form-group col-md-3">
+                            @Html.LabelFor(model => model.DataValidadeOrcamento, htmlAttributes: new { @class = "control-label" })
+                            @Html.TextBoxFor(model => model.DataValidadeOrcamento, "{0:dd/MM/yyyy}", new { @class = "form-control", @placeholder = "dd/mm/aaaa" }.IsDisabled(!bEditar))
+                            @Html.ValidationMessageFor(model => model.DataValidadeOrcamento, "", new { @class = "text-danger" })
+                        </div>
+                    }
+                    else
+                    {
+                        @Html.HiddenFor(model => model.DataValidadeOrcamento)
+                    }
                 </div>
             </div>
             <div class="card-header border-top">
@@ -333,14 +391,15 @@
                             </div>
                             <div class="form-group col-md-2 text-right">
                                 <label>Saldo</label><br />
-                                <b class="text-danger">R$ <span id="saldoPagamento" class="text-danger">@Html.DisplayFor(x => x.Total)</span></b>
+                                @{
+                                    var saldoModal = Model.Total - Model.Entrada;
+                                }
+                                <b class="text-danger">R$ <span id="saldoPagamento" class="text-danger">@(saldoModal?.ToString("N2"))</span></b>
                             </div>
                         </div>
                     </div>
 
-                    <form id="formItemPagamento" data-submited="false">
-                        @Html.Action("FormModalPagamento", new { IdOdemServico = Model.Id })
-                    </form>
+                    @Html.Action("FormModalPagamento", new { IdOdemServico = Model.Id })
 
                     @using (Ajax.BeginForm("InformarPagamento", new AjaxOptions()
                     {
@@ -390,4 +449,91 @@
 
     <!-- Page level custom scripts -->
     @Scripts.Render("~/views/ordemservico/js")
+    
+    <script>
+        function gerarOrdemServico(id) {
+            Swal.fire({
+                title: 'Você tem certeza disso?',
+                text: 'Deseja converter este orçamento em Ordem de Serviço?',
+                type: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Sim, desejo converter!',
+                cancelButtonText: 'Não, quero cancelar!'
+            }).then((result) => {
+                if (result.value) {
+                    $.post('@Url.Action("GerarOrdemServico")', { id: id }, function(response) {
+                        if (response.IsValid) {
+                            message.success('Sucesso', response.Message);
+                            window.location.href = '@Url.Action("Edit", "OrdemServico")' + '?id=' + id + '&tipo=1';
+                        } else {
+                            message.error('Erro', response.Message);
+                        }
+                    });
+                }
+            });
+        }
+        
+        // Habilitar botão imprimir após salvar
+        function formSuccess(result) {
+            if (result.IsValid) {
+                // Se é retorno de pagamento, fechar modal e exibir mensagem
+                if (result.Pagamento) {
+                    $('#modalPagamento').modal('hide');
+                    message.success('Sucesso', result.Message);
+                    // Atualizar flag de pagamento recebido
+                    $('#PagamentoRecebido').val('True');
+                    return;
+                }
+                
+                if (result.Data) {
+                    // Atualizar campos de ID
+                    $('#IdOrdemServico').val(result.Data.Id);
+                    
+                    // Atualizar título da página
+                    $('#page-title').html('Editando registro n° ' + result.Data.Id);
+                    
+                    // Exibir mensagem de sucesso
+                    message.success('Sucesso', result.Message);
+                    
+                    // Habilitar botão imprimir
+                    if (result.Data.Id > 0) {
+                        var tipoTexto = @ViewBag.Tipo == 1 ? 'OS' : 'Orçamento';
+                        $('#linkPrinter').attr('href', '@Url.Action("Printer")' + '?id=' + result.Data.Id + '&gerarPDF=false').show();
+                        
+                        if (@ViewBag.Tipo == 2) {
+                            $('#btnGerarOS').attr('onclick', 'gerarOrdemServico(' + result.Data.Id + ')').show();
+                        }
+                    }
+
+                    // Chamar callback se existir
+                    if (typeof callback !== 'undefined') {
+                        callback('success', result);
+                    }
+                }
+            } else if (!result.IsValid) {
+                if (result.Messages && result.Messages.length > 0) {
+                    var errorMessage = result.Messages.join('\n');
+                    message.warning('Atenção', errorMessage);
+                } else if (result.Message) {
+                    message.warning('Atenção', result.Message);
+                }
+            }
+        }
+        
+        function formFailure(xhr, status, error) {
+            try {
+                var response = JSON.parse(xhr.responseText);
+                if (response && response.Messages && response.Messages.length > 0) {
+                    var errorMessage = response.Messages.join('\n');
+                    message.error('Erro', errorMessage);
+                } else if (response && response.Message) {
+                    message.error('Erro', response.Message);
+                } else {
+                    message.error('Erro', 'Erro ao processar solicitação. Tente novamente.');
+                }
+            } catch (e) {
+                message.error('Erro', 'Erro ao processar solicitação. Tente novamente.');
+            }
+        }
+    </script>
 }

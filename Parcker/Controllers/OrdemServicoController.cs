@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Parcker.Domain;
 using Parcker.Models;
 using Parcker.Models.Enums;
@@ -25,18 +25,20 @@ namespace Parcker.Controllers
             return View();
         }
 
-        public ActionResult Edit(int? id)
+        public ActionResult Edit(int? id, int tipo = 1)
         {
             using (var entity = new Entity())
             {
                 ViewBag.Veiculos = new List<Veiculo>().Select(x => new SelectListItem()).ToList();
                 ViewBag.Clientes = new List<Cliente>().Select(x => new SelectListItem()).ToList();
+                ViewBag.Tipo = tipo;
 
                 ViewBag.Situacoes = entity.All<SituacaoServico>().Select(x => new SelectListItem() { Text = x.Descricao, Value = x.Id.ToString() }).ToList();
                 ViewBag.Descontos = entity.All<CupomDesconto>().Where(x => x.Ativo && x.DataValidade >= DateTime.Now).Select(x => new SelectListItem() { Text = $"{x.Codigo}-{x.Descricao} R$ {x.ValorDesconto.ToString("N2")}", Value = x.Id.ToString() }).ToList();
 
                 if (!id.HasValue)
-                    return View(new OrdemServicoModel()
+                {
+                    var newModel = new OrdemServicoModel()
                     {
                         DataCriacao = DateTime.Now,
                         IdSituacaoServico = (int)SituacaoServicoEnum.Criado,
@@ -44,13 +46,19 @@ namespace Parcker.Controllers
                         Entrada = 0,
                         IdVeiculo = 0,
                         IdCliente = 0,
-                        KM = 0
-                    });
+                        KM = 0,
+                        IdTipoAtendimento = tipo,
+                        DataValidadeOrcamento = DateTime.Now.AddDays(7)
+                    };
+                    
+                    return View(newModel);
+                }
                 else
                 {
                     var modelMap = Mapper.Map<OrdemServicoModel>(entity.GetById<OrdemServico>(id.Value));
                     if (modelMap != null)
                     {
+                        ViewBag.Tipo = modelMap.IdTipoAtendimento;
                         var veiculo = entity.All<Veiculo>()
                             .Where(x => x.Id == modelMap.IdVeiculo);
 
@@ -77,7 +85,9 @@ namespace Parcker.Controllers
                         IdSituacaoServico = (int)SituacaoServicoEnum.Criado,
                         Desconto = 0,
                         Entrada = 0,
-                        KM = 0
+                        KM = 0,
+                        IdTipoAtendimento = tipo,
+                        DataValidadeOrcamento = DateTime.Now.AddDays(7)
                     });
                 }
             }
@@ -131,7 +141,7 @@ namespace Parcker.Controllers
                         ViewName = "Printer",
                         PageSize = Size.A4,
                         IsGrayScale = false,
-                        Model = model,
+                        Model = model
                     };
                 else
                     return View(model);
@@ -140,11 +150,14 @@ namespace Parcker.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(OrdemServicoModel model, FormCollection inputs)
+        public ActionResult Edit(OrdemServicoModel model, FormCollection inputs, int tipo = 1)
         {
             var itens = ConvertFormToEntityItens(inputs, model.IdSituacaoServico == (int)SituacaoServicoEnum.Cancelado);
             if (!ModelState.IsValid)
-                return Json(new { IsValid = false, Message = MensagemValidacao }, JsonRequestBehavior.AllowGet);
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                return Json(new { IsValid = false, Messages = errors, Message = "Verifique os campos obrigatórios." }, JsonRequestBehavior.AllowGet);
+            }
             else
                 using (var entity = new Entity())
                 {
@@ -152,20 +165,45 @@ namespace Parcker.Controllers
                     {
                         entity.BeginTransaction();
 
-                        //atualiza veiculo
-                        var veiculo = entity.All<Veiculo>()
-                            .Where(x => x.Id == model.IdVeiculo)
-                            .FirstOrDefault();
-                        veiculo.KM = model.KM;
-                        entity.SaveOrUpdate(veiculo);
+                        //atualiza veiculo apenas se existir
+                        if (model.IdVeiculo.HasValue && model.IdVeiculo.Value > 0)
+                        {
+                            var veiculo = entity.All<Veiculo>()
+                                .Where(x => x.Id == model.IdVeiculo)
+                                .FirstOrDefault();
+                            if (veiculo != null)
+                            {
+                                veiculo.KM = model.KM;
+                                entity.SaveOrUpdate(veiculo);
+                            }
+                        }
 
-                        //atualizar os
+                        //criar ou atualizar os
                         var modelMap = Mapper.Map<OrdemServico>(model);
-                        entity.SaveOrUpdate(modelMap);
+                        var isNewRecord = model.Id == 0;
+                        
+                        if (isNewRecord)
+                        {
+                            // Novo registro
+                            modelMap.Id = 0;
+                            modelMap.DataCriacao = DateTime.Now;
+                            entity.Add(modelMap);
+                        }
+                        else
+                        {
+                            // Atualizar registro existente
+                            entity.SaveOrUpdate(modelMap);
+                        }
 
                         //atualizar itens da os
-                        var itensDB = entity.All<ProdServOS>().Where(x => x.IdOrdemServico == model.Id).ToList();
-                        var itensDeletar = itensDB.SkipWhile(x => itens.Where(z => z.Id == x.Id).Any()).ToList();
+                        var itensDB = new List<ProdServOS>();
+                        var itensDeletar = new List<ProdServOS>();
+                        
+                        if (model.Id > 0)
+                        {
+                            itensDB = entity.All<ProdServOS>().Where(x => x.IdOrdemServico == model.Id).ToList();
+                            itensDeletar = itensDB.SkipWhile(x => itens.Where(z => z.Id == x.Id).Any()).ToList();
+                        }
 
                         //adicionar e atualizar
                         List<ProdServOSModel> prodServOSModel = new List<ProdServOSModel>();
@@ -266,6 +304,23 @@ namespace Parcker.Controllers
                     {
                         entity.Rollback();
                         return Json(new { IsValid = false, Message = MensagemErro }, JsonRequestBehavior.AllowGet);
+                    }
+
+                    // Validar se há itens de pagamento
+                    if (itens == null || itens.Count == 0)
+                    {
+                        entity.Rollback();
+                        return Json(new { IsValid = false, Message = "É necessário informar pelo menos uma forma de pagamento." }, JsonRequestBehavior.AllowGet);
+                    }
+
+                    // Validar se o valor total dos pagamentos fecha com o valor da OS
+                    var totalPagamentos = itens.Sum(x => x.Valor);
+                    var saldoOS = ordem.Total - ordem.Entrada;
+                    
+                    if (Math.Abs((int)(totalPagamentos - saldoOS)) > 0.01m) // Tolerância de 1 centavo para arredondamentos
+                    {
+                        entity.Rollback();
+                        return Json(new { IsValid = false, Message = $"O valor total dos pagamentos (R$ {totalPagamentos:N2}) deve ser igual ao saldo da OS (R$ {saldoOS:N2})." }, JsonRequestBehavior.AllowGet);
                     }
 
                     if (itens != null)
@@ -651,8 +706,9 @@ namespace Parcker.Controllers
                     Codigo = x.Id,
                     x.DataCriacao,
                     x.DescricaoServico,
-                    Cliente = x.Cliente.Pessoa.Nome,
-                    Veiculo = $"{x.Veiculo.Placa} - {x.Veiculo.Modelo}",
+                    Cliente = x.Cliente != null ? x.Cliente.Pessoa.Nome : "N/A",
+                    Veiculo = x.Veiculo != null ? $"{x.Veiculo.Placa} - {x.Veiculo.Modelo}" : "N/A",
+                    TipoAtendimento = x.IdTipoAtendimento == 1 ? "Ordem de Serviço" : "Orçamento",
                     SituacaoServico = x.SituacaoServico.Descricao,
                     Pagamento = x.HistoricoPagamentos.Count > 0 && x.IdSituacaoServico == (int)SituacaoServicoEnum.Finalizado ? "PAGO" : x.HistoricoPagamentos.Count == 0 && x.IdSituacaoServico == (int)SituacaoServicoEnum.Finalizado ? "PENDENTE" : x.IdSituacaoServico == (int)SituacaoServicoEnum.Cancelado ? "CANCELADO" : "EM PROCESSO",
                     Total = x.Total.ToString("N2"),
@@ -683,6 +739,38 @@ namespace Parcker.Controllers
                 }, JsonRequestBehavior.AllowGet);
             }
         }
+        [HttpPost]
+        public JsonResult GerarOrdemServico(int id)
+        {
+            using (var entity = new Entity())
+            {
+                try
+                {
+                    entity.BeginTransaction();
+                    var orcamento = entity.GetById<OrdemServico>(id);
+                    if (orcamento != null && orcamento.IdTipoAtendimento == 2)
+                    {
+                        orcamento.IdTipoAtendimento = 1;
+                        orcamento.DataValidadeOrcamento = null;
+                        orcamento.IdSituacaoServico = 2;
+                        entity.SaveOrUpdate(orcamento);
+                        entity.Commit();
+                        return Json(new { IsValid = true, Message = "Orçamento convertido em Ordem de Serviço com sucesso!" }, JsonRequestBehavior.AllowGet);
+                    }
+                    else
+                    {
+                        entity.Rollback();
+                        return Json(new { IsValid = false, Message = "Registro não encontrado ou não é um orçamento." }, JsonRequestBehavior.AllowGet);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    entity.Rollback();
+                    return Json(new { IsValid = false, Message = MensagemErro }, JsonRequestBehavior.AllowGet);
+                }
+            }
+        }
+
         #endregion
     }
 }

@@ -26,6 +26,8 @@ namespace Parcker.Repository.Mapping
             Map(x => x.IdSituacaoServico);
             Map(x => x.IdVeiculo);
             Map(x => x.IdCliente);
+            Map(x => x.IdTipoAtendimento);
+            Map(x => x.DataValidadeOrcamento);
 
             References(x => x.Veiculo)
                 .Column("IdVeiculo")
@@ -44,6 +46,11 @@ namespace Parcker.Repository.Mapping
 
             References(x => x.SituacaoServico)
                 .Column("IdSituacaoServico")
+                .Not.Insert()
+                .Not.Update();
+
+            References(x => x.TipoAtendimento)
+                .Column("IdTipoAtendimento")
                 .Not.Insert()
                 .Not.Update();
 

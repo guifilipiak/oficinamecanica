@@ -3,7 +3,7 @@ message.success = function (title, message) {
     $.toast({
         heading: title,
         text: message,
-        position: 'top-right',
+        position: 'bottom-center',
         stack: false,
         icon: 'success',
         hideAfter: 15000
@@ -14,7 +14,7 @@ message.info = function (title, message) {
     $.toast({
         heading: title,
         text: message,
-        position: 'top-right',
+        position: 'bottom-center',
         stack: false,
         icon: 'info',
         hideAfter: 15000
@@ -25,7 +25,7 @@ message.warning = function (title, message) {
     $.toast({
         heading: title,
         text: message,
-        position: 'top-right',
+        position: 'bottom-center',
         stack: false,
         icon: 'warning',
         hideAfter: 15000
@@ -36,7 +36,7 @@ message.error = function (title, message) {
     $.toast({
         heading: title,
         text: message,
-        position: 'top-right',
+        position: 'bottom-center',
         stack: false,
         icon: 'error',
         hideAfter: 15000

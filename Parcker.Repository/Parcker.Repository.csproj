@@ -85,6 +85,7 @@
     <Compile Include="Mapping\MarcaMap.cs" />
     <Compile Include="Mapping\ProdutoMap .cs" />
     <Compile Include="Mapping\SituacaoContaMap.cs" />
+    <Compile Include="Mapping\TipoAtendimentoMap.cs" />
     <Compile Include="Mapping\TipoContaMap.cs" />
     <Compile Include="Mapping\VeiculoMap .cs" />
     <Compile Include="Mapping\UsuarioMap.cs" />
@@ -100,6 +101,8 @@
       <Name>Parcker.Domain</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="Scripts\changeset-23082025.sql" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

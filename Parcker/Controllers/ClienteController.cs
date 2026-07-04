@@ -31,6 +31,7 @@ namespace Parcker.Controllers
                     return View(new ClienteModel()
                     {
                         Pontos = 0,
+                        Ativo = true,
                         DataCriacao = DateTime.Now,
                         Pessoa = new PessoaModel()
                         {
@@ -110,21 +111,54 @@ namespace Parcker.Controllers
                             }
                             #endregion
 
-                            if (entity.All<Cliente>().Where(x => (x.Pessoa.CPF == model.Pessoa.CPF && !string.IsNullOrEmpty(model.Pessoa.CPF)) || (x.Pessoa.CNPJ == model.Pessoa.CNPJ && !string.IsNullOrEmpty(model.Pessoa.CNPJ))).Any())
+                            // Verifica se já existe uma pessoa com este CPF/CNPJ
+                            var documento = model.Pessoa.Tipo == 1 ? model.Pessoa.CPF : model.Pessoa.CNPJ;
+                            var pessoaExistente = entity.All<Pessoa>().Where(x => 
+                                (model.Pessoa.Tipo == 1 && x.CPF == documento && !string.IsNullOrEmpty(documento)) ||
+                                (model.Pessoa.Tipo == 2 && x.CNPJ == documento && !string.IsNullOrEmpty(documento))
+                            ).FirstOrDefault();
+                            
+                            if (pessoaExistente != null)
                             {
-                                //ja existe um cliente cadastrado com este documento
-                                return Json(new { IsValid = false, Message = "Já existe um cliente cadastro com este número de documento, verifique e tente novamente!" }, JsonRequestBehavior.AllowGet);
+                                // Atualiza os dados da pessoa existente
+                                if (model.Pessoa.Tipo == 1)
+                                {
+                                    pessoaExistente.Nome = cliente.Pessoa.Nome;
+                                }
+                                else
+                                {
+                                    pessoaExistente.RazaoSocial = cliente.Pessoa.RazaoSocial;
+                                    pessoaExistente.Fantasia = cliente.Pessoa.Fantasia;
+                                }
+                                pessoaExistente.Telefone1 = cliente.Pessoa.Telefone1;
+                                pessoaExistente.Telefone2 = cliente.Pessoa.Telefone2;
+                                pessoaExistente.Email = cliente.Pessoa.Email;
+                                pessoaExistente.Endereco = cliente.Pessoa.Endereco;
+                                pessoaExistente.Numero = cliente.Pessoa.Numero;
+                                pessoaExistente.Bairro = cliente.Pessoa.Bairro;
+                                pessoaExistente.Cidade = cliente.Pessoa.Cidade;
+                                pessoaExistente.UF = cliente.Pessoa.UF;
+                                pessoaExistente.CEP = cliente.Pessoa.CEP;
+                                entity.Update(pessoaExistente);
+                                cliente.IdPessoa = pessoaExistente.Id;
+                            }
+                            else
+                            {
+                                // Cria nova pessoa
+                                if (cliente.Pessoa.Id != 0)
+                                    entity.Update(cliente.Pessoa);
+                                else
+                                    entity.Add(cliente.Pessoa);
+                                cliente.IdPessoa = cliente.Pessoa.Id;
                             }
 
-                            if (cliente.Pessoa.Id != 0)
-                                //atualiza pessoa
-                                entity.Update(cliente.Pessoa);
-                            else
-                                //adiciona pessoa
-                                entity.Add(cliente.Pessoa);
+                            // Verifica se já existe cliente para esta pessoa
+                            if (entity.All<Cliente>().Where(x => x.IdPessoa == cliente.IdPessoa).Any())
+                            {
+                                entity.Rollback();
+                                return Json(new { IsValid = false, Message = "Já existe um cliente cadastrado para esta pessoa." }, JsonRequestBehavior.AllowGet);
+                            }
 
-                            //adiciona cliente
-                            cliente.IdPessoa = cliente.Pessoa.Id;
                             entity.Add(cliente);
                         }
                         else
@@ -168,6 +202,11 @@ namespace Parcker.Controllers
                         if (model.OrdensServico != null && model.OrdensServico.Any())
                         {
                             return Json(new { IsValid = false, Message = "Este cliente possui ordens de serviço cadastradas e não pode ser removido." }, JsonRequestBehavior.AllowGet);
+                        }
+
+                        if (model.Pessoa.Veiculos != null && model.Pessoa.Veiculos.Any())
+                        {
+                            return Json(new { IsValid = false, Message = "Este cliente possui veículos cadastrados e não pode ser removido." }, JsonRequestBehavior.AllowGet);
                         }
 
                         entity.Delete(model);
@@ -241,7 +280,8 @@ namespace Parcker.Controllers
                     NomeRazao = x.Pessoa.Tipo == 1 ? x.Pessoa.Nome : x.Pessoa.RazaoSocial,
                     CPFCNPJ = x.Pessoa.Tipo == 1 ? x.Pessoa.CPF : x.Pessoa.CNPJ,
                     Telefone = x.Pessoa.Telefone1,
-                    Endereco = $"Cep: {x.Pessoa.CEP} - {x.Pessoa.Endereco}, N:{x.Pessoa.Numero}, {x.Pessoa.Bairro} - {x.Pessoa.Cidade}/{x.Pessoa.UF}"
+                    Endereco = $"Cep: {x.Pessoa.CEP} - {x.Pessoa.Endereco}, N:{x.Pessoa.Numero}, {x.Pessoa.Bairro} - {x.Pessoa.Cidade}/{x.Pessoa.UF}",
+                    Ativo = x.Ativo ? "Sim" : "Não"
                 }).ToList();
 
                 //order

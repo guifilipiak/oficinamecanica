@@ -11,6 +11,11 @@ namespace Parcker.Domain
         public virtual DateTime? DataFinalizacao { get; set; }
         public virtual string DescricaoServico { get; set; }
         public virtual string Observacoes { get; set; }
+        public virtual bool? PagamentoDinheiro { get; set; }
+        public virtual bool? PagamentoCartaoDebito { get; set; }
+        public virtual bool? PagamentoCartaoCredito { get; set; }
+        public virtual bool? PagamentoPix { get; set; }
+        public virtual string ObservacoesPagamento { get; set; }
         public virtual decimal? Entrada { get; set; }
         public virtual decimal? Desconto { get; set; }
         public virtual decimal SubTotal { get; set; }
@@ -20,6 +25,7 @@ namespace Parcker.Domain
         public virtual int? IdVeiculo { get; set; }
         public virtual int? IdCupomDesconto { get; set; }
         public virtual int? IdCliente { get; set; }
+        public virtual int? IdFuncionario { get; set; }
         public virtual int IdTipoAtendimento { get; set; }
         public virtual DateTime? DataValidadeOrcamento { get; set; }
 
@@ -28,9 +34,11 @@ namespace Parcker.Domain
         public virtual Veiculo Veiculo { get; set; }
         public virtual CupomDesconto CupomDesconto { get; set; }
         public virtual Cliente Cliente { get; set; }
+        public virtual Funcionario Funcionario { get; set; }
 
         public virtual ICollection<Foto> Fotos { get; set; }
         public virtual ICollection<ProdServOS> Itens { get; set; }
         public virtual ICollection<HistoricoPagamento> HistoricoPagamentos { get; set; }
+        public virtual ChecklistVeiculo ChecklistVeiculo { get; set; }
     }
 }

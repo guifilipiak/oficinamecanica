@@ -1,4 +1,4 @@
-﻿using FluentNHibernate.Mapping;
+using FluentNHibernate.Mapping;
 using Parcker.Domain;
 using System;
 using System.Collections.Generic;
@@ -8,16 +8,15 @@ using System.Threading.Tasks;
 
 namespace Parcker.Repository.Mapping
 {
-    class ClienteMap : ClassMap<Cliente>
+    class FuncionarioMap : ClassMap<Funcionario>
     {
-        public ClienteMap()
+        public FuncionarioMap()
         {
             Id(x => x.Id);
-            Map(x => x.DataCriacao);
-            Map(x => x.Apelido);
-            Map(x => x.Pontos);
+            Map(x => x.Cargo);
             Map(x => x.Ativo);
             Map(x => x.IdPessoa);
+            Map(x => x.DataCriacao);
 
             References(x => x.Pessoa)
                 .Column("IdPessoa")
@@ -26,7 +25,7 @@ namespace Parcker.Repository.Mapping
 
             HasMany(x => x.OrdensServico).Inverse().LazyLoad();
 
-            Table("Cliente");
+            Table("Funcionario");
         }
     }
 }

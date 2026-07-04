@@ -13,6 +13,7 @@ namespace Parcker.Models
         public int? IdPessoa { get; set; }
         public string Apelido { get; set; }
         public int? Pontos { get; set; }
+        public bool Ativo { get; set; }
         public PessoaModel Pessoa { get; set; }
     }
 }

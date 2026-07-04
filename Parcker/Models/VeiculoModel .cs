@@ -36,6 +36,8 @@ namespace Parcker.Models
         [Display(Name = "Kilometragem")]
         [Required(ErrorMessage = "Campo KM é obrigatório.")]
         public int? KM { get; set; }
+        [Display(Name = "Câmbio")]
+        public string Cambio { get; set; }
         [Display(Name = "Proprietário do Veículo")]
         [Required(ErrorMessage = "Campo Proprietário é obrigatório.")]
         public int IdPessoa { get; set; }

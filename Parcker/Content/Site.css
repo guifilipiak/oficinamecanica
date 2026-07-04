@@ -100,3 +100,42 @@ select > option[disabled] {
 .dropdown.bootstrap-select.disabled {
     background-color: #eaecf4;
 }
+
+/* Login moderno */
+.bg-dark-custom {
+    background-color: #373435 !important;
+}
+
+.login-form-container-wide {
+    width: 100%;
+    max-width: 500px;
+}
+
+.form-control-modern {
+    height: 55px;
+    padding: 15px 20px;
+    font-size: 16px;
+    border: 2px solid #e3e6f0;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.form-control-modern:focus {
+    border-color: #5a5c69;
+    box-shadow: 0 0 0 0.2rem rgba(90, 92, 105, 0.25);
+}
+
+.min-vh-100 {
+    min-height: 100vh;
+}
+
+.no-gutters {
+    margin-right: 0;
+    margin-left: 0;
+}
+
+.no-gutters > .col,
+.no-gutters > [class*="col-"] {
+    padding-right: 0;
+    padding-left: 0;
+}

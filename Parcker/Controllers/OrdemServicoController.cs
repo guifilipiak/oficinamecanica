@@ -35,6 +35,7 @@ namespace Parcker.Controllers
 
                 ViewBag.Situacoes = entity.All<SituacaoServico>().Select(x => new SelectListItem() { Text = x.Descricao, Value = x.Id.ToString() }).ToList();
                 ViewBag.Descontos = entity.All<CupomDesconto>().Where(x => x.Ativo && x.DataValidade >= DateTime.Now).Select(x => new SelectListItem() { Text = $"{x.Codigo}-{x.Descricao} R$ {x.ValorDesconto.ToString("N2")}", Value = x.Id.ToString() }).ToList();
+                ViewBag.Funcionarios = entity.All<Funcionario>().Where(x => x.Ativo).Select(x => new SelectListItem() { Text = x.Pessoa.Nome, Value = x.Id.ToString() }).ToList();
 
                 if (!id.HasValue)
                 {
@@ -103,6 +104,7 @@ namespace Parcker.Controllers
             formaPagamentoColletion.Add(new SelectListItem() { Value = ((int)FormasPagamentoEnum.Cheque).ToString(), Text = "Cheque" });
             formaPagamentoColletion.Add(new SelectListItem() { Value = ((int)FormasPagamentoEnum.Deposito).ToString(), Text = "Depósito" });
             formaPagamentoColletion.Add(new SelectListItem() { Value = ((int)FormasPagamentoEnum.TransferenciaBancaria).ToString(), Text = "Transferência Bancária" });
+            formaPagamentoColletion.Add(new SelectListItem() { Value = ((int)FormasPagamentoEnum.PIX).ToString(), Text = "PIX" });
             ViewBag.FormaPagamento = formaPagamentoColletion;
 
             using (var entity = new Entity())
@@ -584,6 +586,7 @@ namespace Parcker.Controllers
                     {
                         veiculo.Id,
                         veiculo.KM,
+                        veiculo.Cambio,
                         Proprietario = veiculo.Pessoa?.Nome,
                         veiculo.Placa,
                         veiculo.Modelo,
@@ -768,6 +771,293 @@ namespace Parcker.Controllers
                     entity.Rollback();
                     return Json(new { IsValid = false, Message = MensagemErro }, JsonRequestBehavior.AllowGet);
                 }
+            }
+        }
+
+        public ActionResult Checklist(int id)
+        {
+            using (var entity = new Entity())
+            {
+                var ordemServico = entity.GetById<OrdemServico>(id);
+                if (ordemServico == null || ordemServico.Id == 0)
+                {
+                    return RedirectToAction("Index");
+                }
+
+                var checklist = entity.All<ChecklistVeiculo>().FirstOrDefault(x => x.IdOrdemServico == id);
+                
+                ChecklistVeiculoModel model;
+                if (checklist == null)
+                {
+                    // Criar novo checklist com itens padrão
+                    model = new ChecklistVeiculoModel
+                    {
+                        IdOrdemServico = id,
+                        Itens = CriarItensChecklistPadrao()
+                    };
+                }
+                else
+                {
+                    model = Mapper.Map<ChecklistVeiculoModel>(checklist);
+                }
+
+                ViewBag.OrdemServico = ordemServico;
+                return View(model);
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Checklist(ChecklistVeiculoModel model)
+        {
+            using (var entity = new Entity())
+            {
+                try
+                {
+                    entity.BeginTransaction();
+
+                    var checklistExistente = entity.All<ChecklistVeiculo>().FirstOrDefault(x => x.IdOrdemServico == model.IdOrdemServico);
+                    
+                    if (checklistExistente == null)
+                    {
+                        // Criar novo checklist
+                        var novoChecklist = new ChecklistVeiculo
+                        {
+                            IdOrdemServico = model.IdOrdemServico,
+                            Observacoes = model.Observacoes ?? "",
+                            DataCriacao = DateTime.Now
+                        };
+                        entity.Add(novoChecklist);
+
+                        // Adicionar itens
+                        foreach (var item in model.Itens)
+                        {
+                            var novoItem = new ChecklistItem
+                            {
+                                IdChecklistVeiculo = novoChecklist.Id,
+                                Sistema = item.Sistema ?? "",
+                                Item = item.Item ?? "",
+                                Verificado = item.Verificado,
+                                Observacao = item.Observacao ?? "",
+                                DataCriacao = DateTime.Now
+                            };
+                            entity.Add(novoItem);
+                        }
+                    }
+                    else
+                    {
+                        // Atualizar checklist existente
+                        checklistExistente.Observacoes = model.Observacoes ?? "";
+                        entity.SaveOrUpdate(checklistExistente);
+
+                        // Remover itens existentes e adicionar novos
+                        var itensExistentes = entity.All<ChecklistItem>().Where(x => x.IdChecklistVeiculo == checklistExistente.Id).ToList();
+                        foreach (var item in itensExistentes)
+                        {
+                            entity.Delete(item);
+                        }
+
+                        foreach (var item in model.Itens)
+                        {
+                            var novoItem = new ChecklistItem
+                            {
+                                IdChecklistVeiculo = checklistExistente.Id,
+                                Sistema = item.Sistema ?? "",
+                                Item = item.Item ?? "",
+                                Verificado = item.Verificado,
+                                Observacao = item.Observacao ?? "",
+                                DataCriacao = DateTime.Now
+                            };
+                            entity.Add(novoItem);
+                        }
+                    }
+
+                    entity.Commit();
+                    return Json(new { IsValid = true, Message = "Checklist salvo com sucesso!" }, JsonRequestBehavior.AllowGet);
+                }
+                catch (Exception ex)
+                {
+                    entity.Rollback();
+                    return Json(new { IsValid = false, Message = "Erro ao salvar checklist." }, JsonRequestBehavior.AllowGet);
+                }
+            }
+        }
+
+        private List<ChecklistItemModel> CriarItensChecklistPadrao()
+        {
+            return new List<ChecklistItemModel>
+            {
+                // Troca de óleo
+                new ChecklistItemModel { Sistema = "Troca de Óleo", Item = "Anti-chama" },
+                new ChecklistItemModel { Sistema = "Troca de Óleo", Item = "Cartão de óleo" },
+                new ChecklistItemModel { Sistema = "Troca de Óleo", Item = "Filtro de ar" },
+                new ChecklistItemModel { Sistema = "Troca de Óleo", Item = "Filtro de ar-condicionado" },
+                new ChecklistItemModel { Sistema = "Troca de Óleo", Item = "Filtro de combustível" },
+                new ChecklistItemModel { Sistema = "Troca de Óleo", Item = "Filtro de óleo do motor" },
+                new ChecklistItemModel { Sistema = "Troca de Óleo", Item = "Óleo do motor" },
+
+                // Sistema de freios
+                new ChecklistItemModel { Sistema = "Sistema de Freios", Item = "Cilindro" },
+                new ChecklistItemModel { Sistema = "Sistema de Freios", Item = "Disco dianteiro/traseiro" },
+                new ChecklistItemModel { Sistema = "Sistema de Freios", Item = "Cilindro de roda traseira" },
+                new ChecklistItemModel { Sistema = "Sistema de Freios", Item = "Flexível de freio dianteiro/traseiro" },
+                new ChecklistItemModel { Sistema = "Sistema de Freios", Item = "Fluido de freio" },
+                new ChecklistItemModel { Sistema = "Sistema de Freios", Item = "Freio de estacionamento (cabo e alavanca)" },
+                new ChecklistItemModel { Sistema = "Sistema de Freios", Item = "Lona de freio" },
+                new ChecklistItemModel { Sistema = "Sistema de Freios", Item = "Pastilha de freio dianteira/traseira" },
+                new ChecklistItemModel { Sistema = "Sistema de Freios", Item = "Sapatas" },
+
+                // Sistema de direção e suspensão
+                new ChecklistItemModel { Sistema = "Sistema de Direção e Suspensão", Item = "Amortecedores dianteiros/traseiros" },
+                new ChecklistItemModel { Sistema = "Sistema de Direção e Suspensão", Item = "Articulações de direção" },
+                new ChecklistItemModel { Sistema = "Sistema de Direção e Suspensão", Item = "Balanceamento e geometria" },
+                new ChecklistItemModel { Sistema = "Sistema de Direção e Suspensão", Item = "Barra de direção" },
+                new ChecklistItemModel { Sistema = "Sistema de Direção e Suspensão", Item = "Buchas de suspensão" },
+                new ChecklistItemModel { Sistema = "Sistema de Direção e Suspensão", Item = "Caixa de direção" },
+                new ChecklistItemModel { Sistema = "Sistema de Direção e Suspensão", Item = "Coifas sem eixos" },
+                new ChecklistItemModel { Sistema = "Sistema de Direção e Suspensão", Item = "Coluna da direção" },
+                new ChecklistItemModel { Sistema = "Sistema de Direção e Suspensão", Item = "Coxins da caixa" },
+                new ChecklistItemModel { Sistema = "Sistema de Direção e Suspensão", Item = "Coxins do motor" },
+                new ChecklistItemModel { Sistema = "Sistema de Direção e Suspensão", Item = "Cubos roda dianteiro/traseiro" },
+                new ChecklistItemModel { Sistema = "Sistema de Direção e Suspensão", Item = "Juntas homocinéticas" },
+                new ChecklistItemModel { Sistema = "Sistema de Direção e Suspensão", Item = "Molas dianteiras/traseiras" },
+                new ChecklistItemModel { Sistema = "Sistema de Direção e Suspensão", Item = "Pivôs" },
+                new ChecklistItemModel { Sistema = "Sistema de Direção e Suspensão", Item = "Terminais de direção" },
+
+                // Sistema de injeção
+                new ChecklistItemModel { Sistema = "Sistema de Injeção", Item = "Análise de gases (HC: 140±2 / CO: 14± CO2)" },
+                new ChecklistItemModel { Sistema = "Sistema de Injeção", Item = "Bicos injetores" },
+                new ChecklistItemModel { Sistema = "Sistema de Injeção", Item = "Bomba de combustível" },
+                new ChecklistItemModel { Sistema = "Sistema de Injeção", Item = "Cabo acelerador" },
+                new ChecklistItemModel { Sistema = "Sistema de Injeção", Item = "Carburador / corpo borboleta (TBI)" },
+                new ChecklistItemModel { Sistema = "Sistema de Injeção", Item = "Limpeza do sistema de injeção" },
+                new ChecklistItemModel { Sistema = "Sistema de Injeção", Item = "Pré-filtro da bomba de combustível" },
+                new ChecklistItemModel { Sistema = "Sistema de Injeção", Item = "Sensores (rotação / temperatura / posição)" },
+
+                // Sistema de ignição
+                new ChecklistItemModel { Sistema = "Sistema de Ignição", Item = "Bobinas" },
+                new ChecklistItemModel { Sistema = "Sistema de Ignição", Item = "Cabos de vela" },
+                new ChecklistItemModel { Sistema = "Sistema de Ignição", Item = "Distribuidor" },
+                new ChecklistItemModel { Sistema = "Sistema de Ignição", Item = "Rotor" },
+                new ChecklistItemModel { Sistema = "Sistema de Ignição", Item = "Tampa do distribuidor" },
+                new ChecklistItemModel { Sistema = "Sistema de Ignição", Item = "Velas" },
+
+                // Sistema de arrefecimento
+                new ChecklistItemModel { Sistema = "Sistema de Arrefecimento", Item = "Bomba d'água / mangueira / tubulação / sensores" },
+                new ChecklistItemModel { Sistema = "Sistema de Arrefecimento", Item = "Radiador" },
+                new ChecklistItemModel { Sistema = "Sistema de Arrefecimento", Item = "Reservatório da água do radiador" },
+                new ChecklistItemModel { Sistema = "Sistema de Arrefecimento", Item = "Tampa do reservatório" },
+                new ChecklistItemModel { Sistema = "Sistema de Arrefecimento", Item = "Válvula termostática" },
+
+                // Sistema elétrico
+                new ChecklistItemModel { Sistema = "Sistema Elétrico", Item = "Ar-condicionado e ventilação" },
+                new ChecklistItemModel { Sistema = "Sistema Elétrico", Item = "Bateria / regulador de voltagem" },
+                new ChecklistItemModel { Sistema = "Sistema Elétrico", Item = "Bomba de combustível" },
+                new ChecklistItemModel { Sistema = "Sistema Elétrico", Item = "Buzina" },
+                new ChecklistItemModel { Sistema = "Sistema Elétrico", Item = "Cabo do acelerador" },
+                new ChecklistItemModel { Sistema = "Sistema Elétrico", Item = "Cabos e terminais" },
+                new ChecklistItemModel { Sistema = "Sistema Elétrico", Item = "Carburador" },
+                new ChecklistItemModel { Sistema = "Sistema Elétrico", Item = "Lâmpadas (teto / portas / porta-malas / porta-luvas)" },
+                new ChecklistItemModel { Sistema = "Sistema Elétrico", Item = "Lâmpadas (farol e sinaleira)" },
+                new ChecklistItemModel { Sistema = "Sistema Elétrico", Item = "Limpeza do sistema de injeção" },
+                new ChecklistItemModel { Sistema = "Sistema Elétrico", Item = "Motor de partida" },
+                new ChecklistItemModel { Sistema = "Sistema Elétrico", Item = "Pré-filtro da bomba de combustível" },
+
+                // Sistema de câmbio/embreagem
+                new ChecklistItemModel { Sistema = "Sistema de Câmbio/Embreagem", Item = "Cabo de embreagem" },
+                new ChecklistItemModel { Sistema = "Sistema de Câmbio/Embreagem", Item = "Cilindros / atuador" },
+                new ChecklistItemModel { Sistema = "Sistema de Câmbio/Embreagem", Item = "Funcionamento das alavancas" },
+                new ChecklistItemModel { Sistema = "Sistema de Câmbio/Embreagem", Item = "Kit embreagem" },
+                new ChecklistItemModel { Sistema = "Sistema de Câmbio/Embreagem", Item = "Óleo do câmbio" },
+                new ChecklistItemModel { Sistema = "Sistema de Câmbio/Embreagem", Item = "Retentor do volante e da prise" },
+
+                // Correias
+                new ChecklistItemModel { Sistema = "Correias", Item = "Auxiliares" },
+                new ChecklistItemModel { Sistema = "Correias", Item = "Dentada" },
+                new ChecklistItemModel { Sistema = "Correias", Item = "Retentores" },
+                new ChecklistItemModel { Sistema = "Correias", Item = "Rolamentos tensores e guias" },
+
+                // Vedação do motor
+                new ChecklistItemModel { Sistema = "Vedação do Motor", Item = "Junta da tampa de válvulas" },
+                new ChecklistItemModel { Sistema = "Vedação do Motor", Item = "Junta do cárter" },
+                new ChecklistItemModel { Sistema = "Vedação do Motor", Item = "Retentores" },
+
+                // Carroceria
+                new ChecklistItemModel { Sistema = "Carroceria", Item = "Água / aditivo limpador de para-brisa" },
+                new ChecklistItemModel { Sistema = "Carroceria", Item = "Esguicho de água do para-brisa" },
+                new ChecklistItemModel { Sistema = "Carroceria", Item = "Estepe / chave de roda / macaco / triângulo" },
+                new ChecklistItemModel { Sistema = "Carroceria", Item = "Extintor de incêndio (validade)" },
+                new ChecklistItemModel { Sistema = "Carroceria", Item = "Palheta limpador" },
+                new ChecklistItemModel { Sistema = "Carroceria", Item = "Portas (regulagens e lubrificação)" },
+
+                // Sistema de exaustão
+                new ChecklistItemModel { Sistema = "Sistema de Exaustão", Item = "Abraçadeiras / coxins / juntas" },
+                new ChecklistItemModel { Sistema = "Sistema de Exaustão", Item = "Escapamento" }
+            };
+        }
+
+        public ActionResult PrinterChecklist(int id, bool gerarPDF = false, bool vazio = false)
+        {
+            using (var entity = new Entity())
+            {
+                var ordemServico = entity.GetById<OrdemServico>(id);
+                if (ordemServico == null)
+                {
+                    return RedirectToAction("Index");
+                }
+
+                ChecklistVeiculoModel checklist;
+                if (vazio)
+                {
+                    checklist = new ChecklistVeiculoModel
+                    {
+                        IdOrdemServico = id,
+                        Itens = CriarItensChecklistPadrao()
+                    };
+                }
+                else
+                {
+                    var checklistDB = entity.All<ChecklistVeiculo>().FirstOrDefault(x => x.IdOrdemServico == id);
+                    if (checklistDB != null)
+                    {
+                        checklist = Mapper.Map<ChecklistVeiculoModel>(checklistDB);
+                        // Garantir que todos os itens padrão estejam presentes
+                        var itensExistentes = checklist.Itens.ToList();
+                        var itensPadrao = CriarItensChecklistPadrao();
+                        
+                        foreach (var itemPadrao in itensPadrao)
+                        {
+                            if (!itensExistentes.Any(x => x.Sistema == itemPadrao.Sistema && x.Item == itemPadrao.Item))
+                            {
+                                itensExistentes.Add(itemPadrao);
+                            }
+                        }
+                        checklist.Itens = itensExistentes;
+                    }
+                    else
+                    {
+                        checklist = new ChecklistVeiculoModel
+                        {
+                            IdOrdemServico = id,
+                            Itens = CriarItensChecklistPadrao()
+                        };
+                    }
+                }
+
+                ViewBag.OrdemServico = ordemServico;
+                ViewBag.Vazio = vazio;
+                ViewBag.Usuario = entity.All<Usuario>().Where(x => x.Nome == User.Identity.Name).FirstOrDefault();
+
+                if (gerarPDF)
+                    return new ViewAsPdf()
+                    {
+                        FileName = $"Checklist_OS_{id}.pdf",
+                        ViewName = "PrinterChecklist",
+                        PageSize = Size.A4,
+                        Model = checklist
+                    };
+                else
+                    return View(checklist);
             }
         }
 

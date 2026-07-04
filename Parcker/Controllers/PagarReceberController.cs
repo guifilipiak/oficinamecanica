@@ -27,6 +27,7 @@ namespace Parcker.Controllers
             formaPagamentoColletion.Add(new SelectListItem() { Value = ((int)FormasPagamentoEnum.Cheque).ToString(), Text = "Cheque" });
             formaPagamentoColletion.Add(new SelectListItem() { Value = ((int)FormasPagamentoEnum.Deposito).ToString(), Text = "Depósito" });
             formaPagamentoColletion.Add(new SelectListItem() { Value = ((int)FormasPagamentoEnum.TransferenciaBancaria).ToString(), Text = "Transferência Bancária" });
+            formaPagamentoColletion.Add(new SelectListItem() { Value = ((int)FormasPagamentoEnum.PIX).ToString(), Text = "PIX" });
             ViewBag.FormaPagamento = formaPagamentoColletion;
 
             return View();
@@ -47,6 +48,7 @@ namespace Parcker.Controllers
                 formaPagamentoColletion.Add(new SelectListItem() { Value = ((int)FormasPagamentoEnum.Cheque).ToString(), Text = "Cheque" });
                 formaPagamentoColletion.Add(new SelectListItem() { Value = ((int)FormasPagamentoEnum.Deposito).ToString(), Text = "Depósito" });
                 formaPagamentoColletion.Add(new SelectListItem() { Value = ((int)FormasPagamentoEnum.TransferenciaBancaria).ToString(), Text = "Transferência Bancária" });
+                formaPagamentoColletion.Add(new SelectListItem() { Value = ((int)FormasPagamentoEnum.PIX).ToString(), Text = "PIX" });
                 ViewBag.FormaPagamento = formaPagamentoColletion;
 
                 if (!id.HasValue || id == 0)
@@ -341,11 +343,35 @@ namespace Parcker.Controllers
                     //where
                     if (model.@object != null)
                     {
-                        if (model.@object.DataPagamento.HasValue)
+                        DateTime? dataInicio = model.@object.DataPagamento;
+                        DateTime? dataFim = model.@object.DataVencimento;
+                        
+                        // Se não informado data início, mas informado data fim: hoje até data fim 23:59:59
+                        if (!dataInicio.HasValue && dataFim.HasValue)
                         {
-                            var proxDia = model.@object.DataPagamento.Value.AddDays(1);
-                            list = list.Where(x => x.DataPagamento >= model.@object.DataPagamento && x.DataPagamento < proxDia);
+                            dataInicio = DateTime.Today;
+                            dataFim = dataFim.Value.Date.AddDays(1).AddSeconds(-1);
                         }
+                        // Se informado data início, mas não informado data fim: data início até hoje 23:59:59
+                        else if (dataInicio.HasValue && !dataFim.HasValue)
+                        {
+                            dataFim = DateTime.Today.AddDays(1).AddSeconds(-1);
+                        }
+                        // Se informado ambas as datas: intervalo completo
+                        else if (dataInicio.HasValue && dataFim.HasValue)
+                        {
+                            dataFim = dataFim.Value.Date.AddDays(1).AddSeconds(-1);
+                        }
+                        
+                        if (dataInicio.HasValue)
+                        {
+                            list = list.Where(x => x.DataCriacao >= dataInicio.Value);
+                        }
+                        if (dataFim.HasValue)
+                        {
+                            list = list.Where(x => x.DataCriacao <= dataFim.Value);
+                        }
+                        
                         if (model.@object.IdTipoConta != 0)
                             list = list.Where(x => x.IdTipoConta == model.@object.IdTipoConta);
                         if (model.@object.IdFormaPagamento != 0)
@@ -370,6 +396,7 @@ namespace Parcker.Controllers
                         x.Id,
                         Codigo = x.Id,
                         x.DataCriacao,
+                        Lancamento = x.DataCriacao.ToString("dd/MM/yyyy"),
                         x.Descricao,
                         DataPagamento = x.DataPagamento.HasValue ? x.DataPagamento.Value.ToString("dd/MM/yyyy") : "--",
                         DataVencimento = x.DataVencimento.HasValue ? x.DataVencimento.Value.ToString("dd/MM/yyyy") : "--",

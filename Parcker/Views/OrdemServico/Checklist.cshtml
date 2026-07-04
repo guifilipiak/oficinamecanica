@@ -1,0 +1,132 @@
+@model Parcker.Models.ChecklistVeiculoModel
+
+@{
+    ViewBag.Title = "Checklist do Veículo";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var ordemServico = ViewBag.OrdemServico as Parcker.Domain.OrdemServico;
+}
+
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">Checklist do Veículo</h1>
+            <p class="mb-4">Ordem de Serviço N° @ordemServico.Id - @(ordemServico.Veiculo?.Placa ?? "N/A") - @(ordemServico.Veiculo?.Modelo ?? "N/A")</p>
+        </div>
+        <div>
+            <a href="@Url.Action("PrinterChecklist", new { id = Model.IdOrdemServico, vazio = true })" target="_blank" class="btn btn-sm btn-info"><i class="fas fa-print"></i> Imprimir Vazio</a>
+            <a href="@Url.Action("PrinterChecklist", new { id = Model.IdOrdemServico })" target="_blank" class="btn btn-sm btn-primary"><i class="fas fa-print"></i> Imprimir Preenchido</a>
+            @Html.ActionLink("Voltar para OS", "Edit", new { id = Model.IdOrdemServico }, new { @class = "btn btn-sm btn-secondary" })
+        </div>
+    </div>
+
+    @using (Ajax.BeginForm(new AjaxOptions()
+    {
+        HttpMethod = "POST",
+        AllowCache = false,
+        LoadingElementId = "preloader-geral",
+        LoadingElementDuration = 1000,
+        OnBegin = "formBegin",
+        OnComplete = "formComplete",
+        OnSuccess = "formSuccess",
+        OnFailure = "formFailure"
+    }))
+    {
+        @Html.AntiForgeryToken()
+        @Html.HiddenFor(model => model.Id)
+        @Html.HiddenFor(model => model.IdOrdemServico)
+
+        <div class="card shadow mb-4">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold text-primary">Itens de Verificação</h6>
+            </div>
+            <div class="card-body">
+                @{
+                    var sistemas = Model.Itens.GroupBy(x => x.Sistema).ToList();
+                }
+
+                @for (int s = 0; s < sistemas.Count; s++)
+                {
+                    var sistema = sistemas[s];
+                    <div class="mb-4">
+                        <h5 class="text-primary border-bottom pb-2">@sistema.Key</h5>
+                        <div class="row">
+                            @{
+                                var itens = sistema.ToList();
+                            }
+                            @for (int i = 0; i < itens.Count; i++)
+                            {
+                                var item = itens[i];
+                                var index = Model.Itens.ToList().IndexOf(item);
+                                
+                                <div class="col-md-6 mb-2">
+                                    @Html.Hidden($"Itens[{index}].Sistema", item.Sistema)
+                                    @Html.Hidden($"Itens[{index}].Item", item.Item)
+                                    
+                                    <div class="row align-items-center">
+                                        <div class="col-5">
+                                            <div class="form-check">
+                                                @Html.CheckBox($"Itens[{index}].Verificado", item.Verificado, new { @class = "form-check-input", @id = $"item_{index}" })
+                                                <label class="form-check-label" for="item_@index">
+                                                    @item.Item
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-7">
+                                            @Html.TextBox($"Itens[{index}].Observacao", item.Observacao, new { @class = "form-control form-control-sm", @placeholder = "Observações...", @maxlength = "500" })
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            
+                            @* Adiciona opção "Outros" para cada sistema *@
+                            <div class="col-md-6 mb-2">
+                                <div class="row align-items-center">
+                                    <div class="col-5">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="outros_@(sistema.Key.Replace(" ", "_"))" name="Outros_@(sistema.Key.Replace(" ", "_"))" />
+                                            <label class="form-check-label" for="outros_@(sistema.Key.Replace(" ", "_"))">
+                                                <strong>Outros</strong>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-7">
+                                        <input type="text" class="form-control form-control-sm" name="ObservacaoOutros_@(sistema.Key.Replace(" ", "_"))" placeholder="Especifique outros itens..." maxlength="500" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <div class="form-group">
+                    @Html.LabelFor(model => model.Observacoes, htmlAttributes: new { @class = "control-label font-weight-bold" })
+                    @Html.TextAreaFor(model => model.Observacoes, new { @class = "form-control", @rows = 4, @placeholder = "Observações gerais sobre o checklist...", @maxlength = "1000" })
+                    @Html.ValidationMessageFor(model => model.Observacoes, "", new { @class = "text-danger" })
+                </div>
+
+                <div class="form-group text-right">
+                    @Html.ActionLink("Cancelar", "Edit", new { id = Model.IdOrdemServico }, new { @class = "btn btn-secondary" })
+                    <button type="submit" class="btn btn-success">
+                        <i class="fa fa-save"></i> Salvar Checklist
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        function formSuccess(result) {
+            if (result.IsValid) {
+                message.success('Sucesso', result.Message);
+            } else {
+                message.error('Erro', result.Message);
+            }
+        }
+
+        function formFailure(xhr, status, error) {
+            message.error('Erro', 'Erro ao processar solicitação. Tente novamente.');
+        }
+    </script>
+}

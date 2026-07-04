@@ -42,15 +42,23 @@
             -webkit-transform: rotate(45deg);
             -webkit-transform-origin: center;
         }
+        
+
     </style>
 </head>
 <body class="container">
+
     @if (Model.OrdemServico.IdTipoAtendimento == 2)
     {
         <div class="watermark">ORÇAMENTO</div>
     }
 
     <section class="sheet padding-10mm">
+        <div style="margin-bottom: 10px;">
+            <div style="height: 5px; background-color: #EB0302;"></div>
+            <div style="height: 5px; background-color: #0098DA;"></div>
+            <div style="height: 5px; background-color: #373435;"></div>
+        </div>
         <div class="text-right no-print">
             @if (!Request.QueryString["gerarPDF"].AsBool() && !this.IsAjax)
             {
@@ -153,6 +161,7 @@
                                     Renavam:&nbsp;&nbsp;@Model.OrdemServico.Veiculo.Renavam<br />
                                     Modelo:&nbsp;&nbsp;@Model.OrdemServico.Veiculo.Modelo<br />
                                     Cor:&nbsp;&nbsp;@Model.OrdemServico.Veiculo.Cor<br />
+                                    Câmbio:&nbsp;&nbsp;@(Model.OrdemServico.Veiculo.Cambio ?? "N/A")<br />
                                 </td>
                             </tr>
                         </table>
@@ -228,15 +237,62 @@
                 <td class="text-right"><h5>R$ @Model.OrdemServico.Total.ToString("N2")</h5></td>
             </tr>
         </table>
+        
+        @if (Model.OrdemServico.IdTipoAtendimento == 2 && Model.OrdemServico.DataValidadeOrcamento.HasValue)
+        {
+            <div class="text-center mt-4">
+                <p><strong>Validade do Orcamento: @Model.OrdemServico.DataValidadeOrcamento.Value.ToString("dd/MM/yyyy")</strong></p>
+            </div>
+        }
+        
+        @if (Model.OrdemServico.PagamentoDinheiro == true || Model.OrdemServico.PagamentoCartaoDebito == true || Model.OrdemServico.PagamentoCartaoCredito == true || Model.OrdemServico.PagamentoPix == true || !string.IsNullOrEmpty(Model.OrdemServico.ObservacoesPagamento))
+        {
+            <hr class="mt-0 mb-2" />
+            <table class="table table-borderless">
+                <tr>
+                    <td width="250" class="text-right">
+                        <p>Formas de Pagamento</p>
+                        <p>
+                            @if (Model.OrdemServico.PagamentoDinheiro == true)
+                            {
+                                <span>✓ Dinheiro</span><br />
+                            }
+                            @if (Model.OrdemServico.PagamentoCartaoDebito == true)
+                            {
+                                <span>✓ Cartão de Débito</span><br />
+                            }
+                            @if (Model.OrdemServico.PagamentoCartaoCredito == true)
+                            {
+                                <span>✓ Cartão de Crédito</span><br />
+                            }
+                            @if (Model.OrdemServico.PagamentoPix == true)
+                            {
+                                <span>✓ PIX</span><br />
+                            }
+                        </p>
+                    </td>
+                    <td width="250" class="text-right">
+                        <p>Observações de Pagamento</p>
+                        <p>@Model.OrdemServico.ObservacoesPagamento</p>
+                    </td>
+                </tr>
+            </table>
+        }
+        
+        <hr class="mt-0 mb-2" />
         <table class="table table-borderless">
             <tr>
-                <td width="250" class="text-right">
+                <td width="166" class="text-right">
                     <p>Descrição do Serviço</p>
                     <p>@Model.OrdemServico.DescricaoServico</p>
                 </td>
-                <td width="250" class="text-right">
+                <td width="167" class="text-right">
                     <p>Observações</p>
                     <p>@Model.OrdemServico.Observacoes</p>
+                </td>
+                <td width="167" class="text-right">
+                    <p>Responsável pelo Serviço</p>
+                    <p>@(Model.OrdemServico.Funcionario?.Pessoa?.Nome ?? "")</p>
                 </td>
             </tr>
         </table>
@@ -252,12 +308,8 @@
                 </td>
             </tr>
         </table>
-        @if (Model.OrdemServico.IdTipoAtendimento == 2 && Model.OrdemServico.DataValidadeOrcamento.HasValue)
-        {
-            <div class="text-center mt-4">
-                <p><strong>Validade do Orcamento: @Model.OrdemServico.DataValidadeOrcamento.Value.ToString("dd/MM/yyyy")</strong></p>
-            </div>
-        }
+        
+
     </section>
     <script type="text/javascript">
         var URLBase = "@(Url.Content("~/"))";

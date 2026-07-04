@@ -1,0 +1,179 @@
+@model Parcker.Models.ChecklistVeiculoModel
+@using Parcker.Models.Enums
+@{
+    ViewBag.Title = "Checklist do Veículo";
+    Layout = null;
+    var ordemServico = ViewBag.OrdemServico as Parcker.Domain.OrdemServico;
+    var vazio = ViewBag.Vazio as bool? ?? false;
+    var usuario = ViewBag.Usuario as Parcker.Domain.Usuario;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width" />
+    <title>Checklist do Veículo - Oficina Parcker</title>
+    @Styles.Render("~/impressao/css")
+    @Scripts.Render("~/impressao/js")
+    <link rel="shortcut icon" type="image/png" href="@Url.Content("~/Content/img/logo_icon.png")" />
+    <style type="text/css">
+        @@page { size: A4; }
+        table { font-size: 12px; }
+        table > thead > tr > th { padding: 4px 6px !important; }
+        input[type="checkbox"] {
+            -webkit-appearance: checkbox;
+            -moz-appearance: checkbox;
+            appearance: checkbox;
+            width: 12px;
+            height: 12px;
+        }
+    </style>
+</head>
+<body class="container">
+
+    <section class="sheet padding-10mm">
+        <div style="margin-bottom: 10px;">
+            <div style="height: 5px; background-color: #EB0302;"></div>
+            <div style="height: 5px; background-color: #0098DA;"></div>
+            <div style="height: 5px; background-color: #373435;"></div>
+        </div>
+        <div class="text-right no-print">
+            @if (!Request.QueryString["gerarPDF"].AsBool() && !this.IsAjax)
+            {
+                <a class="btn btn-link" href="@Url.Action("PrinterChecklist", new { id = ordemServico.Id, gerarPDF = true, vazio = vazio })"><i class="fa fa-file-pdf"></i>&nbsp;GERAR PDF</a>
+            }
+        </div>
+        <article class="text-center mb-0">
+            <table class="table table-borderless mb-0">
+                <tr>
+                    <td width="250" class="text-left pl-0"><img src="@Url.Content("~/Content/img/logo.png")" style="width: 200px; height: auto;" /></td>
+                    <td width="250" class="text-right pr-0">
+                        @if (usuario?.Pessoa != null)
+                        {
+                            <p class="lead">
+                                @if (usuario.Pessoa.Tipo == (int)TipoPessoaEnum.Fisica)
+                                {
+                                    <text>@usuario.Pessoa.Nome</text>
+                                }
+                                else
+                                {
+                                    <text>@usuario.Pessoa.Fantasia</text>
+                                }
+                            </p>
+                            <div class="mb-4">
+                                @if (usuario.Pessoa.Tipo == (int)TipoPessoaEnum.Fisica)
+                                {
+                                    <small>Nome: </small> @usuario.Pessoa.Nome<br />
+                                    <small>CPF: </small> @usuario.Pessoa.CPF<br />
+                                    <small>Telefone: </small> @(usuario.Pessoa.Telefone1 + " | " + usuario.Pessoa.Telefone2)<br />
+                                    <small>Endereço: </small> @(usuario.Pessoa.Endereco + ", n° " + usuario.Pessoa.Numero + ", " + usuario.Pessoa.Bairro + " - " + usuario.Pessoa.Cidade + "/" + usuario.Pessoa.UF)<br />
+                                }
+                                else
+                                {
+                                    <small>Razão Social: </small> @usuario.Pessoa.RazaoSocial<br />
+                                    <small>CNPJ: </small> @usuario.Pessoa.CNPJ<br />
+                                    <small>Telefone: </small> @(usuario.Pessoa.Telefone1 + " | " + usuario.Pessoa.Telefone2)<br />
+                                    <small>Endereço: </small> @(usuario.Pessoa.Endereco + ", n° " + usuario.Pessoa.Numero + ", " + usuario.Pessoa.Bairro + " - " + usuario.Pessoa.Cidade + "/" + usuario.Pessoa.UF)<br />
+                                }
+                            </div>
+                        }
+                    </td>
+                </tr>
+            </table>
+        </article>
+        <h4>Checklist do Veículo - OS n° @ordemServico.Id</h4>
+        <p class="text-left">
+            <small>Checklist criado em: @ordemServico.DataCriacao.ToLongDateString()</small>
+        </p>
+        <hr class="mt-2 mb-0" />
+        <table class="table table-borderless">
+            <tr>
+                @if (ordemServico.Cliente != null)
+                {
+                    <td width="250" class="text-left pl-0">
+                        <p class="lead mb-0">Cliente</p>
+                        <div>
+                            @if (ordemServico.Cliente.Pessoa.Tipo == (int)TipoPessoaEnum.Fisica)
+                            {
+                                <text>
+                                    Nome:&nbsp;&nbsp;@ordemServico.Cliente.Pessoa.Nome<br />
+                                    CPF:&nbsp;&nbsp;@ordemServico.Cliente.Pessoa.CPF<br />
+                                    Telefone:&nbsp;&nbsp;@(ordemServico.Cliente.Pessoa.Telefone1 + " | " + ordemServico.Cliente.Pessoa.Telefone2)<br />
+                                </text>
+                            }
+                            else
+                            {
+                                <text>
+                                    Razão Social:&nbsp;&nbsp;@ordemServico.Cliente.Pessoa.RazaoSocial<br />
+                                    CNPJ:&nbsp;&nbsp;@ordemServico.Cliente.Pessoa.CNPJ<br />
+                                    Telefone:&nbsp;&nbsp;@(ordemServico.Cliente.Pessoa.Telefone1 + " | " + ordemServico.Cliente.Pessoa.Telefone2)<br />
+                                </text>
+                            }
+                        </div>
+                    </td>
+                }
+                @if (ordemServico.Veiculo != null)
+                {
+                    <td width="250" class="text-left pl-0">
+                        <p class="lead mb-0">Veículo</p>
+                        <div>
+                            Placa:&nbsp;&nbsp;@ordemServico.Veiculo.Placa<br />
+                            Marca:&nbsp;&nbsp;@(ordemServico.Veiculo.Marca?.Descricao)<br />
+                            Modelo:&nbsp;&nbsp;@ordemServico.Veiculo.Modelo<br />
+                            Ano:&nbsp;&nbsp;@ordemServico.Veiculo.Ano<br />
+                            Câmbio:&nbsp;&nbsp;@(ordemServico.Veiculo.Cambio ?? "N/A")<br />
+                            KM:&nbsp;&nbsp;@ordemServico.KM
+                        </div>
+                    </td>
+                }
+            </tr>
+        </table>
+        <hr class="mt-0 mb-2" />
+        <p class="lead">Checklist do Veículo</p>
+
+        <table style="width: 100%; table-layout: fixed;">
+            @{
+                var sistemas = Model.Itens.GroupBy(x => x.Sistema).ToList();
+                for (int i = 0; i < sistemas.Count; i += 4)
+                {
+                    <tr>
+                        @for (int j = 0; j < 4; j++)
+                        {
+                            if (i + j < sistemas.Count)
+                            {
+                                var sistema = sistemas[i + j];
+                                <td style="width: 25%; vertical-align: top; padding-right: 10px;">
+                                    <p style="margin-bottom: 5px; font-size: 11px;"><strong>@sistema.Key</strong></p>
+                                    <div style="font-size: 9px;">
+                                        @foreach (var item in sistema)
+                                        {
+                                            <div style="margin-bottom: 2px;">
+                                                <input type="checkbox" @(vazio ? "" : (item.Verificado ? "checked" : "")) disabled style="margin-right: 3px;" />
+                                                @item.Item @(vazio ? "" : (!string.IsNullOrEmpty(item.Observacao) ? " - " + item.Observacao : ""))
+                                            </div>
+                                        }
+                                    </div>
+                                </td>
+                            }
+                            else
+                            {
+                                <td style="width: 25%;"></td>
+                            }
+                        }
+                    </tr>
+                }
+            }
+        </table>
+
+        <hr class="mt-4 mb-2" />
+        <table class="table table-borderless">
+            <tr>
+                <td class="text-left">
+                    <p><strong>Observações Gerais</strong></p>
+                    <p style="border-bottom:1px solid #333;min-height:60px;padding:5px;">@(vazio ? "" : Model.Observacoes ?? "")</p>
+                </td>
+            </tr>
+        </table>
+    </section>
+</body>
+</html>

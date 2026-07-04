@@ -133,6 +133,9 @@ namespace Parcker
             bundles.Add(new ScriptBundle("~/views/pagarreceber/relatoriofluxocaixa/js").Include(
                       "~/Scripts/views/pagarreceber/relatoriofluxocaixa.js"));
 
+            bundles.Add(new ScriptBundle("~/views/funcionario/js").Include(
+                      "~/Scripts/views/funcionario/funcionario.js"));
+
             bundles.Add(new ScriptBundle("~/impressao/js").Include(
                       "~/template/vendor/jquery/jquery.min.js",
                       "~/template/vendor/toast-master/js/jquery.toast.js",

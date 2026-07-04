@@ -16,6 +16,7 @@ namespace Parcker.Repository.Mapping
             Map(x => x.Placa);
             Map(x => x.Modelo);
             Map(x => x.KM);
+            Map(x => x.Cambio);
             Map(x => x.DataCriacao);
             Map(x => x.Chassi);
             Map(x => x.Cor);

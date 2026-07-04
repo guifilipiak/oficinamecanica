@@ -16,6 +16,7 @@ namespace Parcker.Domain
         public virtual int? Ano { get; set; }
         public virtual int? AnoFabricacao { get; set; }
         public virtual int? KM { get; set; }
+        public virtual string Cambio { get; set; }
         public virtual int IdPessoa { get; set; }
         public virtual int IdMarca { get; set; }
 

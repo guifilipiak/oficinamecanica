@@ -36,7 +36,12 @@
             </p>
         </div>
         <div style="margin-top:-20px">
-            <a id="linkPrinter" href="@Url.Action("Printer", new { id = Model.Id, gerarPDF = false })" target="_blank" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm" style="@(Model.Id > 0 ? "" : "display:none!important")"><i class="fas fa-print fa-sm text-white-50"></i> Imprimir @(ViewBag.Tipo == 1 ? "OS" : "Orçamento")</a>
+            @if (ViewBag.Tipo == 1)
+            {
+                <a href="@Url.Action("Checklist", new { id = Model.Id })" class="d-none d-sm-inline-block btn btn-sm btn-info shadow-sm" style="@(Model.Id > 0 ? "" : "display:none!important")"><i class="fas fa-clipboard-check fa-sm text-white-50"></i> Checklist</a>
+            }
+            
+            <a id="linkPrinter" href="@Url.Action("Printer", new { id = Model.Id, gerarPDF = false })" target="_blank" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm ml-2" style="@(Model.Id > 0 ? "" : "display:none!important")"><i class="fas fa-print fa-sm text-white-50"></i> Imprimir @(ViewBag.Tipo == 1 ? "OS" : "Orçamento")</a>
             
             @if (ViewBag.Tipo == 2)
             {
@@ -165,6 +170,7 @@
                                 <div class="input-group-prepend"><span class="input-group-text">KM</span></div>
                                 @Html.TextBoxFor(model => model.KM, new { @class = "form-control text-right" }.IsDisabled(true))
                             </div>
+                            <small id="veiculoCambio" class="form-text text-muted"></small>
                             @Html.ValidationMessageFor(model => model.KM, "", new { @class = "text-danger" })
                         </div>
 
@@ -202,6 +208,7 @@
                                 <div class="input-group-prepend"><span class="input-group-text">KM</span></div>
                                 @Html.TextBoxFor(model => model.KM, new { @class = "form-control text-right" }.IsDisabled(false))
                             </div>
+                            <small id="veiculoCambioEdit" class="form-text text-muted"></small>
                             @Html.ValidationMessageFor(model => model.KM, "", new { @class = "text-danger" })
                         </div>
 
@@ -209,6 +216,12 @@
                             @Html.LabelFor(model => model.IdCliente, htmlAttributes: new { @class = "control-label" })
                             @Html.DropDownListFor(model => model.IdCliente, ViewBag.Clientes as IEnumerable<SelectListItem>, "Selecione o cliente", new { @class = "form-control selectpicker-clientes", @data_live_search = "true" })
                             @Html.ValidationMessageFor(model => model.IdCliente, "", new { @class = "text-danger" })
+                        </div>
+
+                        <div class="form-group col-md-3">
+                            @Html.LabelFor(model => model.IdFuncionario, htmlAttributes: new { @class = "control-label" })
+                            @Html.DropDownListFor(model => model.IdFuncionario, ViewBag.Funcionarios as IEnumerable<SelectListItem>, "Selecione o funcionário", new { @class = "form-control" })
+                            @Html.ValidationMessageFor(model => model.IdFuncionario, "", new { @class = "text-danger" })
                         </div>
                     }
 
@@ -331,6 +344,44 @@
                 </div>
             </div>
             <div class="card-header border-top">
+                <div class="text-primary">FORMA DE PAGAMENTO</div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="form-group col-md-3">
+                        <div class="form-check">
+                            @Html.CheckBox("PagamentoDinheiro", Model.PagamentoDinheiro ?? false, new { @class = "form-check-input" }.IsDisabled(!bEditar))
+                            @Html.LabelFor(model => model.PagamentoDinheiro, htmlAttributes: new { @class = "form-check-label" })
+                        </div>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <div class="form-check">
+                            @Html.CheckBox("PagamentoCartaoDebito", Model.PagamentoCartaoDebito ?? false, new { @class = "form-check-input" }.IsDisabled(!bEditar))
+                            @Html.LabelFor(model => model.PagamentoCartaoDebito, htmlAttributes: new { @class = "form-check-label" })
+                        </div>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <div class="form-check">
+                            @Html.CheckBox("PagamentoCartaoCredito", Model.PagamentoCartaoCredito ?? false, new { @class = "form-check-input" }.IsDisabled(!bEditar))
+                            @Html.LabelFor(model => model.PagamentoCartaoCredito, htmlAttributes: new { @class = "form-check-label" })
+                        </div>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <div class="form-check">
+                            @Html.CheckBox("PagamentoPix", Model.PagamentoPix ?? false, new { @class = "form-check-input" }.IsDisabled(!bEditar))
+                            @Html.LabelFor(model => model.PagamentoPix, htmlAttributes: new { @class = "form-check-label" })
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-md-12">
+                        @Html.LabelFor(model => model.ObservacoesPagamento, htmlAttributes: new { @class = "control-label" })
+                        @Html.TextAreaFor(model => model.ObservacoesPagamento, new { @class = "form-control", @rows = 2, @placeholder = "Observações sobre a forma de pagamento..." }.IsDisabled(!bEditar))
+                        @Html.ValidationMessageFor(model => model.ObservacoesPagamento, "", new { @class = "text-danger" })
+                    </div>
+                </div>
+            </div>
+            <div class="card-header border-top">
                 <div class="text-primary">DESCRIÇÃO DO SERVIÇO</div>
             </div>
             <div class="card-body">
@@ -392,9 +443,9 @@
                             <div class="form-group col-md-2 text-right">
                                 <label>Saldo</label><br />
                                 @{
-                                    var saldoModal = Model.Total - Model.Entrada;
+                                    decimal saldoModal = Model.Total - (Model.Entrada ?? 0);
                                 }
-                                <b class="text-danger">R$ <span id="saldoPagamento" class="text-danger">@(saldoModal?.ToString("N2"))</span></b>
+                                <b class="text-danger">R$ <span id="saldoPagamento" class="text-danger">@(saldoModal.ToString("N2"))</span></b>
                             </div>
                         </div>
                     </div>
@@ -495,11 +546,19 @@
                     // Exibir mensagem de sucesso
                     message.success('Sucesso', result.Message);
                     
-                    // Habilitar botão imprimir
+                    // Habilitar botões
                     if (result.Data.Id > 0) {
                         var tipoTexto = @ViewBag.Tipo == 1 ? 'OS' : 'Orçamento';
+                        
+                        // Botão checklist (apenas para OS)
+                        if (@ViewBag.Tipo == 1) {
+                            $('a[href*="Checklist"]').attr('href', '@Url.Action("Checklist")' + '?id=' + result.Data.Id).show();
+                        }
+                        
+                        // Botão imprimir
                         $('#linkPrinter').attr('href', '@Url.Action("Printer")' + '?id=' + result.Data.Id + '&gerarPDF=false').show();
                         
+                        // Botão gerar OS (apenas para orçamentos)
                         if (@ViewBag.Tipo == 2) {
                             $('#btnGerarOS').attr('onclick', 'gerarOrdemServico(' + result.Data.Id + ')').show();
                         }

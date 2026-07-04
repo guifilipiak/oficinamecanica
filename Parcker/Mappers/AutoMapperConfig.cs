@@ -56,7 +56,18 @@ namespace Parcker.Mappers
                 x.CreateMap<PagarReceber, PagarReceberModel>()
                 .ForMember(dest => dest.Recorrente, opt => opt.MapFrom(src => src.Recorrente == 1));
                 x.CreateMap<PagarReceberModel, PagarReceber>()
-                .ForMember(dest => dest.Recorrente, opt => opt.MapFrom(src => src.Recorrente ? 1 : 0)); ;
+                .ForMember(dest => dest.Recorrente, opt => opt.MapFrom(src => src.Recorrente ? 1 : 0));
+
+                x.CreateMap<ChecklistVeiculo, ChecklistVeiculoModel>();
+                x.CreateMap<ChecklistVeiculoModel, ChecklistVeiculo>();
+
+                x.CreateMap<ChecklistItem, ChecklistItemModel>();
+                x.CreateMap<ChecklistItemModel, ChecklistItem>();
+
+                x.CreateMap<Funcionario, FuncionarioModel>()
+                .ForMember(dest => dest.OrdensServico, opt => opt.MapFrom(src => src.OrdensServico));
+                x.CreateMap<FuncionarioModel, Funcionario>()
+                .ForMember(dest => dest.OrdensServico, opt => opt.Ignore());
             });
         }
     }

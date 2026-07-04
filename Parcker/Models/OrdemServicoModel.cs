@@ -14,6 +14,16 @@ namespace Parcker.Models
         public string DescricaoServico { get; set; }
         [Display(Name = "Observações")]
         public string Observacoes { get; set; }
+        [Display(Name = "Dinheiro")]
+        public bool? PagamentoDinheiro { get; set; }
+        [Display(Name = "Cartão Débito")]
+        public bool? PagamentoCartaoDebito { get; set; }
+        [Display(Name = "Cartão Crédito")]
+        public bool? PagamentoCartaoCredito { get; set; }
+        [Display(Name = "PIX")]
+        public bool? PagamentoPix { get; set; }
+        [Display(Name = "Observações do Pagamento")]
+        public string ObservacoesPagamento { get; set; }
         [DisplayFormat(ApplyFormatInEditMode = true, NullDisplayText = "0,00", DataFormatString = "{0:n2}")]
         public decimal? Entrada { get; set; }
         [DisplayFormat(ApplyFormatInEditMode = true, NullDisplayText = "0,00", DataFormatString = "{0:n2}")]
@@ -32,6 +42,8 @@ namespace Parcker.Models
         [CustomValidation(typeof(OrdemServicoModel), "ValidateIdCliente")]
         [Display(Name = "Cliente")]
         public int? IdCliente { get; set; }
+        [Display(Name = "Responsável pelo Serviço")]
+        public int? IdFuncionario { get; set; }
         [Display(Name = "Kilometragem")]
         [CustomValidation(typeof(OrdemServicoModel), "ValidateKM")]
         public int? KM { get; set; }

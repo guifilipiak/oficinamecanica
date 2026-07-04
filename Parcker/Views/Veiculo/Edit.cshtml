@@ -102,6 +102,17 @@
                     </div>
 
                     <div class="form-group col-md-3">
+                        @Html.LabelFor(model => model.Cambio, htmlAttributes: new { @class = "control-label" })
+                        @Html.DropDownListFor(model => model.Cambio, new List<SelectListItem>
+                        {
+                            new SelectListItem { Text = "Selecione o câmbio", Value = "" },
+                            new SelectListItem { Text = "Manual", Value = "Manual" },
+                            new SelectListItem { Text = "Automático", Value = "Automatico" }
+                        }, new { @class = "form-control" })
+                        @Html.ValidationMessageFor(model => model.Cambio, "", new { @class = "text-danger" })
+                    </div>
+
+                    <div class="form-group col-md-3">
                         @Html.LabelFor(model => model.IdPessoa, htmlAttributes: new { @class = "control-label" })
                         @Html.DropDownListFor(model => model.IdPessoa, ViewBag.Pessoas as IEnumerable<SelectListItem>, "Selecione um Proprietário", new { @class = "form-control selectpicker-pessoas", @data_live_search = "true" })
                         @Html.ValidationMessageFor(model => model.IdPessoa, "", new { @class = "text-danger" })

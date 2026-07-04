@@ -18,6 +18,7 @@ namespace Parcker.Models.Enums
         [Description("Transferência Bancária")]
         TransferenciaBancaria = 6,
         [Description("Depósito")]
-        Deposito = 7
+        Deposito = 7,
+        PIX = 8
     }
 }

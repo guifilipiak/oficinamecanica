@@ -13,7 +13,8 @@
                     d["object"] = {
                         IdTipoConta: $("#IdTipoConta").val() || 0,
                         IdFormaPagamento: $("#IdFormaPagamento").val() || 0,
-                        DataPagamento: $("#DataPagamento").val()
+                        DataPagamento: $("input[name='DataPagamento']").val(),
+                        DataVencimento: $("input[name='DataVencimento']").val()
                     };
                     return d;
                 }
@@ -45,6 +46,7 @@
                             return '<img title="Receita" data-toggle="tooltip" src="' + URLBase + "Content/img/revenue.png" + '" width="30px" />';
                     }
                 },
+                { title: 'Lançamento', data: 'Lancamento' },
                 { title: 'Classificação', data: 'Classificacao' },
                 { title: 'Obs', data: 'Descricao' },
                 { title: 'Pagamento', data: 'DataPagamento' },

@@ -17,6 +17,11 @@ namespace Parcker.Repository.Mapping
             Map(x => x.DataFinalizacao);
             Map(x => x.DescricaoServico);
             Map(x => x.Observacoes);
+            Map(x => x.PagamentoDinheiro);
+            Map(x => x.PagamentoCartaoDebito);
+            Map(x => x.PagamentoCartaoCredito);
+            Map(x => x.PagamentoPix);
+            Map(x => x.ObservacoesPagamento);
             Map(x => x.Entrada);
             Map(x => x.Desconto);
             Map(x => x.SubTotal);
@@ -26,6 +31,7 @@ namespace Parcker.Repository.Mapping
             Map(x => x.IdSituacaoServico);
             Map(x => x.IdVeiculo);
             Map(x => x.IdCliente);
+            Map(x => x.IdFuncionario);
             Map(x => x.IdTipoAtendimento);
             Map(x => x.DataValidadeOrcamento);
 
@@ -44,6 +50,11 @@ namespace Parcker.Repository.Mapping
                 .Not.Insert()
                 .Not.Update();
 
+            References(x => x.Funcionario)
+                .Column("IdFuncionario")
+                .Not.Insert()
+                .Not.Update();
+
             References(x => x.SituacaoServico)
                 .Column("IdSituacaoServico")
                 .Not.Insert()
@@ -57,6 +68,7 @@ namespace Parcker.Repository.Mapping
             HasMany(x => x.Itens).Inverse().LazyLoad();
             HasMany(x => x.Fotos).Inverse().LazyLoad();
             HasMany(x => x.HistoricoPagamentos).Inverse().LazyLoad();
+            HasOne(x => x.ChecklistVeiculo).PropertyRef(x => x.IdOrdemServico).LazyLoad();
 
             Table("OrdemServico");
         }

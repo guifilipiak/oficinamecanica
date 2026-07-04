@@ -2,22 +2,6 @@ $(document).ready(function () {
     var _tempData;
     var _tempCpfCnpj;
 
-    $(".tipo-pessoa").change(function () {
-        switch ($(this).val()) {
-            case "1":
-                $("#fisica").show();
-                $("#juridica").hide();
-                $("#juridica").find("input, select, textarea").val("");
-                break;
-            case "2":
-                $("#juridica").show();
-                $("#fisica").hide();
-                $("#fisica").find("input, select, textarea").val("");
-                break;
-            default:
-        }
-    });
-
     $("#Pessoa_CEP").change(function () {
         var value = $(this).val().replace("-", "");
         if (value && value.length == 8) {
@@ -57,11 +41,11 @@ $(document).ready(function () {
         }
     });
 
-    $("#Pessoa_CPF, #Pessoa_CNPJ").change(function () {
+    $("#Pessoa_CPF").change(function () {
         if ($(this).val() != _tempCpfCnpj) {
             _tempCpfCnpj = $(this).val();
             $.ajax({
-                url: URLBase + "Cliente/RetornarDadosPessoaPorCpfCnpj",
+                url: URLBase + "Funcionario/RetornarDadosPessoaPorCpf",
                 data: {
                     cpfCnpj: $(this).val()
                 },
@@ -123,31 +107,29 @@ $(document).ready(function () {
         }
     });
 
-    $(".tipo-pessoa").change();
-
     if ($('#dataTable').length > 0) {
         $('#dataTable').DataTable({
             processing: true,
             serverSide: true,
             ajax: {
-                url: URLBase + 'Cliente/RetornaListaClientes',
+                url: URLBase + 'Funcionario/RetornaListaFuncionarios',
                 type: 'POST',
                 dataSrc: 'data'
             },
             columns: [
-                { title: 'Nome', data: 'NomeRazao' },
-                { title: 'Apelido', data: 'Apelido' },
-                { title: 'Núm.Doc.', data: 'CPFCNPJ' },
+                { title: 'Nome', data: 'Nome' },
+                { title: 'CPF', data: 'CPF' },
                 { title: 'Telefone', data: 'Telefone' },
-                { title: 'Endereço', data: 'Endereco' },
+                { title: 'Email', data: 'Email' },
+                { title: 'Cargo', data: 'Cargo' },
                 { title: 'Ativo', data: 'Ativo' },
                 {
                     title: '',
                     data: 'Id',
                     width: "115px",
                     render: function (data, type, row) {
-                        var buttons = "<a href='" + URLBase + "Cliente/Edit/" + data + "' class='btn btn-link'><i class='fa fa-edit'></i>&nbsp;Editar</a>" +
-                            '<button class="btn btn-link" onclick="confirmDelete(\'Cliente/Delete\',' + data + ', function () { $(\'#dataTable\').DataTable().ajax.reload(); })"><i class="fa fa-trash"></i>&nbsp;Remover</button>';
+                        var buttons = "<a href='" + URLBase + "Funcionario/Edit/" + data + "' class='btn btn-link'><i class='fa fa-edit'></i>&nbsp;Editar</a>" +
+                            '<button class="btn btn-link" onclick="confirmDelete(\'Funcionario/Delete\',' + data + ', function () { $(\'#dataTable\').DataTable().ajax.reload(); })"><i class="fa fa-trash"></i>&nbsp;Remover</button>';
                         return buttons;
                     }
                 }

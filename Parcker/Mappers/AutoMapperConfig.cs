@@ -42,10 +42,17 @@ namespace Parcker.Mappers
                 x.CreateMap<AlertaModel, Alerta>();
 
                 x.CreateMap<OrdemServico, OrdemServicoModel>();
-                x.CreateMap<OrdemServicoModel, OrdemServico>();
+                x.CreateMap<OrdemServicoModel, OrdemServico>()
+                    .ForMember(dest => dest.Itens, opt => opt.Ignore())
+                    .ForMember(dest => dest.Fotos, opt => opt.Ignore())
+                    .ForMember(dest => dest.HistoricoPagamentos, opt => opt.Ignore())
+                    .ForMember(dest => dest.ChecklistVeiculo, opt => opt.Ignore());
 
                 x.CreateMap<ProdServOS, ProdServOSModel>();
-                x.CreateMap<ProdServOSModel, ProdServOS>();
+                x.CreateMap<ProdServOSModel, ProdServOS>()
+                    .ForMember(dest => dest.OrdemServico, opt => opt.Ignore())
+                    .ForMember(dest => dest.Produto, opt => opt.Ignore())
+                    .ForMember(dest => dest.Servico, opt => opt.Ignore());
 
                 x.CreateMap<CupomDesconto, CupomDescontoModel>();
                 x.CreateMap<CupomDescontoModel, CupomDesconto>();

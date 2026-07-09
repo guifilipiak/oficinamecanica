@@ -104,7 +104,8 @@ namespace Parcker.Controllers
                     {
                         entity.Update(funcionario.Pessoa);
                         funcionario.Pessoa = null;
-                        entity.Update(funcionario);
+                        var merge = entity.Merge(funcionario);
+                        entity.Update(merge);
                     }
 
                     entity.Commit();

@@ -18,6 +18,27 @@ bld/
 .vs/
 **/.vs/
 
+# Project specific folders
+**/bin/
+**/obj/
+Parcker/bin/
+Parcker/obj/
+Parcker.Domain/bin/
+Parcker.Domain/obj/
+Parcker.Repository/bin/
+Parcker.Repository/obj/
+Parcker.Common/bin/
+Parcker.Common/obj/
+
+Parcker/bin/Debug/*
+Parcker/obj/Debug/*
+Parcker.Domain/bin/Debug/*
+Parcker.Domain/obj/Debug/*
+Parcker.Repository/bin/Debug/*
+Parcker.Repository/obj/Debug/*
+Parcker.Common/bin/Debug/*
+Parcker.Common/obj/Debug/*
+
 # NuGet Packages
 *.nupkg
 **/packages/

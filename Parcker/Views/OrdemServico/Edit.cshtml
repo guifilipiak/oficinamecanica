@@ -539,6 +539,10 @@
                 if (result.Data) {
                     // Atualizar campos de ID
                     $('#IdOrdemServico').val(result.Data.Id);
+                    // Atualizar hidden Id do formulário principal (se existir)
+                    if ($('#Id').length) {
+                        $('#Id').val(result.Data.Id);
+                    }
                     
                     // Atualizar título da página
                     $('#page-title').html('Editando registro n° ' + result.Data.Id);

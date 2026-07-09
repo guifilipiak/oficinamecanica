@@ -183,7 +183,7 @@ namespace Parcker.Controllers
                         //criar ou atualizar os
                         var modelMap = Mapper.Map<OrdemServico>(model);
                         var isNewRecord = model.Id == 0;
-                        
+
                         if (isNewRecord)
                         {
                             // Novo registro
@@ -193,8 +193,28 @@ namespace Parcker.Controllers
                         }
                         else
                         {
-                            // Atualizar registro existente
-                            entity.SaveOrUpdate(modelMap);
+                            // Atualizar registro existente: carregar entidade persistente e mapear os valores
+                            var existente = entity.GetById<OrdemServico>(model.Id);
+                            if (existente == null)
+                            {
+                                // Se por algum motivo não encontrou, tratar como novo registro
+                                modelMap.Id = 0;
+                                modelMap.DataCriacao = DateTime.Now;
+                                entity.Add(modelMap);
+                            }
+                            else
+                            {
+                                // preservar DataCriacao do registro existente
+                                var originalDataCriacao = existente.DataCriacao;
+                                // mapear os valores do model para a entidade carregada
+                                Mapper.Map(model, existente);
+                                existente.DataCriacao = originalDataCriacao;
+
+                                // garantir que usamos a instância gerenciada pela session
+                                modelMap = existente;
+
+                                entity.SaveOrUpdate(existente);
+                            }
                         }
 
                         //atualizar itens da os
@@ -568,7 +588,7 @@ namespace Parcker.Controllers
 
                     return Json(new { IsValid = true, IsHaveEmail = true, Message = "E-mail enviado com sucesso!" });
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     return Json(new { IsValid = false, IsHaveEmail = true, Message = "Falha ao tentar enviar e-mail!" });
                 }
@@ -766,7 +786,7 @@ namespace Parcker.Controllers
                         return Json(new { IsValid = false, Message = "Registro não encontrado ou não é um orçamento." }, JsonRequestBehavior.AllowGet);
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     entity.Rollback();
                     return Json(new { IsValid = false, Message = MensagemErro }, JsonRequestBehavior.AllowGet);
@@ -875,7 +895,7 @@ namespace Parcker.Controllers
                     entity.Commit();
                     return Json(new { IsValid = true, Message = "Checklist salvo com sucesso!" }, JsonRequestBehavior.AllowGet);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     entity.Rollback();
                     return Json(new { IsValid = false, Message = "Erro ao salvar checklist." }, JsonRequestBehavior.AllowGet);

@@ -250,7 +250,8 @@ namespace Parcker.Controllers
                         }
                         else
                         {
-                            entity.Update(modelMap);
+                            var merge = entity.Merge(modelMap);
+                            entity.Update(merge);
                         }
 
                         entity.Commit();

@@ -97,7 +97,27 @@ namespace Parcker.Controllers
                     try
                     {
                         var modelMap = Mapper.Map<Alerta>(model);
-                        entity.SaveOrUpdate(modelMap);
+
+                        if (model.Id == 0)
+                        {
+                            entity.Add(modelMap);
+                        }
+                        else
+                        {
+                            var existente = entity.GetById<Alerta>(model.Id);
+                            if (existente == null)
+                            {
+                                entity.Add(modelMap);
+                            }
+                            else
+                            {
+                                var original = existente.DataCriacao;
+                                Mapper.Map(model, existente);
+                                existente.DataCriacao = original;
+                                modelMap = existente;
+                                entity.SaveOrUpdate(existente);
+                            }
+                        }
 
                         return Json(new { IsValid = true, Message = MensagemSalvo, Data = Mapper.Map<AlertaModel>(modelMap) }, JsonRequestBehavior.AllowGet);
                     }

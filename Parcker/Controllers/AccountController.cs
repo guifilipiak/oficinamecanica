@@ -26,7 +26,7 @@ namespace Parcker.Controllers
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Index(LoginModel model, string returnUrl)
+        public ActionResult Index(LoginModel model, string returnUrl)
         {
             if (ModelState.IsValid)
             {

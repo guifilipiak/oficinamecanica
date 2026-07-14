@@ -58,7 +58,7 @@ namespace Parcker.Controllers
                 }
                 return Json(new { IsValid = true, Data = modelDynamic }, JsonRequestBehavior.AllowGet);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return Json(new { IsValid = false }, JsonRequestBehavior.AllowGet);
             }

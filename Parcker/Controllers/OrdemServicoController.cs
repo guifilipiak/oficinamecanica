@@ -568,7 +568,7 @@ namespace Parcker.Controllers
 
                     return Json(new { IsValid = true, IsHaveEmail = true, Message = "E-mail enviado com sucesso!" });
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     return Json(new { IsValid = false, IsHaveEmail = true, Message = "Falha ao tentar enviar e-mail!" });
                 }
@@ -766,7 +766,7 @@ namespace Parcker.Controllers
                         return Json(new { IsValid = false, Message = "Registro não encontrado ou não é um orçamento." }, JsonRequestBehavior.AllowGet);
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     entity.Rollback();
                     return Json(new { IsValid = false, Message = MensagemErro }, JsonRequestBehavior.AllowGet);
@@ -875,7 +875,7 @@ namespace Parcker.Controllers
                     entity.Commit();
                     return Json(new { IsValid = true, Message = "Checklist salvo com sucesso!" }, JsonRequestBehavior.AllowGet);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     entity.Rollback();
                     return Json(new { IsValid = false, Message = "Erro ao salvar checklist." }, JsonRequestBehavior.AllowGet);

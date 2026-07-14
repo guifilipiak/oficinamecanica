@@ -115,7 +115,8 @@ namespace Parcker.Controllers
 
                             //atualiza fornecedor
                             fornecedor.Pessoa = null;
-                            entity.Update(fornecedor);
+                            var mergeFornecedor = entity.Merge(fornecedor);
+                            entity.Update(mergeFornecedor);
                         }
 
                         entity.Commit();

@@ -168,7 +168,8 @@ namespace Parcker.Controllers
 
                             //atualiza cliente
                             cliente.Pessoa = null;
-                            entity.Update(cliente);
+                            var merge = entity.Merge(cliente);
+                            entity.Update(merge);
                         }
 
                         entity.Commit();

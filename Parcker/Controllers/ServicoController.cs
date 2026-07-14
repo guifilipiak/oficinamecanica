@@ -54,9 +54,25 @@ namespace Parcker.Controllers
                         var modelMap = Mapper.Map<Servico>(model);
 
                         if (model.Id == 0)
+                        {
                             entity.Add(modelMap);
+                        }
                         else
-                            entity.Update(modelMap);
+                        {
+                            var existente = entity.GetById<Servico>(model.Id);
+                            if (existente == null)
+                            {
+                                entity.Add(modelMap);
+                            }
+                            else
+                            {
+                                var original = existente.DataCriacao;
+                                Mapper.Map(model, existente);
+                                existente.DataCriacao = original;
+                                modelMap = existente;
+                                entity.SaveOrUpdate(existente);
+                            }
+                        }
 
                         return Json(new { IsValid = true, Message = MensagemSalvo, Data = Mapper.Map<ServicoModel>(modelMap) }, JsonRequestBehavior.AllowGet);
                     }

@@ -183,7 +183,7 @@ namespace Parcker.Controllers
                         //criar ou atualizar os
                         var modelMap = Mapper.Map<OrdemServico>(model);
                         var isNewRecord = model.Id == 0;
-                        
+
                         if (isNewRecord)
                         {
                             // Novo registro
@@ -193,8 +193,28 @@ namespace Parcker.Controllers
                         }
                         else
                         {
-                            // Atualizar registro existente
-                            entity.SaveOrUpdate(modelMap);
+                            // Atualizar registro existente: carregar entidade persistente e mapear os valores
+                            var existente = entity.GetById<OrdemServico>(model.Id);
+                            if (existente == null)
+                            {
+                                // Se por algum motivo não encontrou, tratar como novo registro
+                                modelMap.Id = 0;
+                                modelMap.DataCriacao = DateTime.Now;
+                                entity.Add(modelMap);
+                            }
+                            else
+                            {
+                                // preservar DataCriacao do registro existente
+                                var originalDataCriacao = existente.DataCriacao;
+                                // mapear os valores do model para a entidade carregada
+                                Mapper.Map(model, existente);
+                                existente.DataCriacao = originalDataCriacao;
+
+                                // garantir que usamos a instância gerenciada pela session
+                                modelMap = existente;
+
+                                entity.SaveOrUpdate(existente);
+                            }
                         }
 
                         //atualizar itens da os

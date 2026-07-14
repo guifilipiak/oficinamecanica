@@ -43,7 +43,7 @@ message.error = function (title, message) {
     });
 };
 
-var forms, buttonSubmit, oldTextButtonSubmit;
+var forms, buttonSubmit, oldTextButtonSubmit, currentFormGlobal;
 $(document).ready(function () {
     //String.prototype.replaceAll = function (search, replacement) {
     //    var target = this;
@@ -134,9 +134,21 @@ function createMask(element, mask) {
 }
 
 function formBegin() {
-    buttonSubmit = forms.find("button[type=submit]");
+    // identificar o formulário que iniciou a submissão
+    var currentForm = $(document.activeElement).closest('form');
+    if (!currentForm || currentForm.length == 0) {
+        // fallback: pegar o primeiro form com atributo data-ajax (Ajax.BeginForm aplica esse atributo)
+        currentForm = $('form[data-ajax=true]').first();
+    }
+
+    // botão submit específico do formulário
+    var currentButton = currentForm.find("button[type=submit]");
+    buttonSubmit = currentButton.length ? currentButton : forms.find("button[type=submit]");
+    currentFormGlobal = currentForm;
     oldTextButtonSubmit = buttonSubmit.html();
-    if (forms.valid()) {
+
+    // validar apenas o formulário atual
+    if (currentForm.length == 0 || currentForm.valid()) {
         buttonSubmit.html("Aguarde...").prop("disabled", true);
     }
 
@@ -147,6 +159,9 @@ function formBegin() {
 function formComplete() {
     if (buttonSubmit)
         buttonSubmit.html(oldTextButtonSubmit).prop("disabled", false);
+
+    // limpar referência ao formulário atual
+    currentFormGlobal = null;
 
     if (typeof callback !== 'undefined')
         callback("complete");
@@ -160,7 +175,12 @@ function formFailure(xhr) {
 
 function formSuccess(result) {
     if (result.IsValid) {
-        forms.find("#Id").val(result.Data.Id);
+        // Atualizar apenas o formulário que submeteu
+        if (currentFormGlobal && currentFormGlobal.length) {
+            currentFormGlobal.find("#Id").val(result.Data.Id);
+        } else {
+            forms.find("#Id").val(result.Data.Id);
+        }
         $("#page-title").html("Editando registro n°" + result.Data.Id);
         message.success("OK", result.Message);
     }

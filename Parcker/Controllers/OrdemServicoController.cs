@@ -613,9 +613,9 @@ namespace Parcker.Controllers
                         Marca = veiculo.Marca?.Descricao
                     }, JsonRequestBehavior.AllowGet);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    throw ex;
+                    throw;
                 }
             }
         }
@@ -703,7 +703,7 @@ namespace Parcker.Controllers
                 recordsTotal = list.Count();
 
                 //where
-                if (model.search.value != null)
+                if (!string.IsNullOrWhiteSpace(model.search.value))
                 {
                     var listId = list.Where(x => x.Id.ToString() == model.search.value);
                     if (listId.Count() == 0)
@@ -738,16 +738,22 @@ namespace Parcker.Controllers
                     TotalInterno = x.Total
                 }).ToList();
 
-                //order
-                model.order.ForEach(x =>
+                //order (preserva ordenação por múltiplas colunas)
+                if (model.order != null && model.order.Any())
                 {
-                    //tratamento de cultura na ordenacao
-                    var colOrdem = model.columns[x.column].data;
-                    if (colOrdem == "Total")
-                        colOrdem = "TotalInterno";
-
-                    data = data.OrderBy($"{colOrdem} {x.dir}").ToList();
-                });
+                    var ordenacao = string.Join(", ", model.order
+                        .Where(x => !string.IsNullOrEmpty(model.columns[x.column].data))
+                        .Select(x =>
+                        {
+                            //tratamento de cultura na ordenacao
+                            var colOrdem = model.columns[x.column].data;
+                            if (colOrdem == "Total")
+                                colOrdem = "TotalInterno";
+                            return $"{colOrdem} {x.dir}";
+                        }));
+                    if (!string.IsNullOrEmpty(ordenacao))
+                        data = data.OrderBy(ordenacao).ToList();
+                }
 
                 //skip take
                 data = data.Skip(model.start).Take(model.length).ToList();

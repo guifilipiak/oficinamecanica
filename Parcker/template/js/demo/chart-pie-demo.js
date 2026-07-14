@@ -2,8 +2,7 @@
 Chart.defaults.global.defaultFontFamily = 'Nunito', '-apple-system,system-ui,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
 Chart.defaults.global.defaultFontColor = '#858796';
 
-// Pie Chart Example
-buscarEstatisticaOS();
+// Pie Chart Example — inicializado/atualizado por atualizaDashBoard() (home.js)
 function buscarEstatisticaOS() {
     $.ajax({
         url: URLBase + "Home/BuscarEstatisticaOS",
@@ -13,7 +12,8 @@ function buscarEstatisticaOS() {
         },
         success: function (json) {
             var ctx = document.getElementById("myPieChart");
-            var myPieChart = new Chart(ctx, {
+            if (window.chartSituacaoOS) { window.chartSituacaoOS.destroy(); }
+            window.chartSituacaoOS = new Chart(ctx, {
                 type: 'doughnut',
                 data: JSON.parse(json),
                 options: {

@@ -1,5 +1,6 @@
 ﻿$(document).ready(function () {
-    buscarResumoRendimentosOS();
+    // carrega todos os indicadores e gráficos no primeiro acesso
+    atualizaDashBoard();
 });
 
 function atualizaDashBoard(ano) {

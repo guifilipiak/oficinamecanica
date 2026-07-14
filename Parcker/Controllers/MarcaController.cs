@@ -123,18 +123,22 @@ namespace Parcker.Controllers
                 recordsTotal = list.Count();
 
                 //where
-                if (model.search.value != null)
+                if (!string.IsNullOrWhiteSpace(model.search.value))
                 {
                     list = list.Where(x => x.Descricao.Contains(model.search.value));
                 }
 
                 recordsFiltered = list.Count();
 
-                //order
-                model.order.ForEach(x =>
+                //order (preserva ordenação por múltiplas colunas)
+                if (model.order != null && model.order.Any())
                 {
-                    list = list.OrderBy($"{model.columns[x.column].data} {x.dir}");
-                });
+                    var ordenacao = string.Join(", ", model.order
+                        .Where(x => !string.IsNullOrEmpty(model.columns[x.column].data))
+                        .Select(x => $"{model.columns[x.column].data} {x.dir}"));
+                    if (!string.IsNullOrEmpty(ordenacao))
+                        list = list.OrderBy(ordenacao);
+                }
 
                 //select skip take
                 var data = list.Select(x => new

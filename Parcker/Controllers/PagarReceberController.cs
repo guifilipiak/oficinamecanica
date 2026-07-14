@@ -118,12 +118,14 @@ namespace Parcker.Controllers
             {
                 using (var entity = new Entity())
                 {
+                    // Data Final inclusiva até o fim do dia (23:59:59)
+                    var dataFinal = filtro.DataFinal.Date.AddDays(1).AddSeconds(-1);
                     var model = new PrinterPRModel()
                     {
                         Usuario = entity.All<Usuario>().Where(x => x.Nome == User.Identity.Name).FirstOrDefault(),
                         PagarReceber = entity.All<PagarReceber>()
                             .Where(x => x.DataPagamento >= filtro.DataInicio
-                                && x.DataPagamento <= filtro.DataFinal
+                                && x.DataPagamento <= dataFinal
                                 && filtro.IdSituacaoConta.Contains(x.IdSituacaoConta)
                                 && filtro.IdFormaPagamento.Contains(x.IdFormaPagamento))
                             .OrderBy(x => x.DataPagamento)
@@ -148,12 +150,14 @@ namespace Parcker.Controllers
             {
                 using (var entity = new Entity())
                 {
+                    // Data Final inclusiva até o fim do dia (23:59:59)
+                    var dataFinal = filtro.DataFinal.Date.AddDays(1).AddSeconds(-1);
                     var model = new PrinterPRModel()
                     {
                         Usuario = entity.All<Usuario>().Where(x => x.Nome == User.Identity.Name).FirstOrDefault(),
                         PagarReceber = entity.All<PagarReceber>()
                             .Where(x => x.DataPagamento >= filtro.DataInicio
-                                && x.DataPagamento <= filtro.DataFinal
+                                && x.DataPagamento <= dataFinal
                                 && filtro.IdSituacaoConta.Contains(x.IdSituacaoConta)
                                 && filtro.IdFormaPagamento.Contains(x.IdFormaPagamento))
                             .OrderBy(x => x.DataPagamento)
@@ -344,42 +348,31 @@ namespace Parcker.Controllers
                     //where
                     if (model.@object != null)
                     {
+                        // Filtro por período de Lançamento (DataCriacao).
+                        // "Data Início"/"Data Final" da tela são transportadas nas propriedades DataPagamento/DataVencimento do model.
                         DateTime? dataInicio = model.@object.DataPagamento;
                         DateTime? dataFim = model.@object.DataVencimento;
-                        
-                        // Se não informado data início, mas informado data fim: hoje até data fim 23:59:59
-                        if (!dataInicio.HasValue && dataFim.HasValue)
-                        {
-                            dataInicio = DateTime.Today;
-                            dataFim = dataFim.Value.Date.AddDays(1).AddSeconds(-1);
-                        }
-                        // Se informado data início, mas não informado data fim: data início até hoje 23:59:59
-                        else if (dataInicio.HasValue && !dataFim.HasValue)
-                        {
-                            dataFim = DateTime.Today.AddDays(1).AddSeconds(-1);
-                        }
-                        // Se informado ambas as datas: intervalo completo
-                        else if (dataInicio.HasValue && dataFim.HasValue)
-                        {
-                            dataFim = dataFim.Value.Date.AddDays(1).AddSeconds(-1);
-                        }
-                        
+
+                        // limite inferior: início do dia informado (sem forçar "hoje")
                         if (dataInicio.HasValue)
                         {
-                            list = list.Where(x => x.DataCriacao >= dataInicio.Value);
+                            var inicio = dataInicio.Value.Date;
+                            list = list.Where(x => x.DataCriacao >= inicio);
                         }
+                        // limite superior: fim do dia informado (23:59:59)
                         if (dataFim.HasValue)
                         {
-                            list = list.Where(x => x.DataCriacao <= dataFim.Value);
+                            var fim = dataFim.Value.Date.AddDays(1).AddSeconds(-1);
+                            list = list.Where(x => x.DataCriacao <= fim);
                         }
-                        
+
                         if (model.@object.IdTipoConta != 0)
                             list = list.Where(x => x.IdTipoConta == model.@object.IdTipoConta);
                         if (model.@object.IdFormaPagamento != 0)
                             list = list.Where(x => x.IdFormaPagamento == model.@object.IdFormaPagamento);
                     }
 
-                    if (model.search.value != null)
+                    if (!string.IsNullOrWhiteSpace(model.search.value))
                     {
                         list = list.Where(x => x.Descricao.ToLower().Contains(model.search.value.ToLower()) ||
                         x.Pessoa.Nome.ToLower().Contains(model.search.value.ToLower()) ||
@@ -400,12 +393,15 @@ namespace Parcker.Controllers
                         Lancamento = x.DataCriacao.ToString("dd/MM/yyyy"),
                         x.Descricao,
                         DataPagamento = x.DataPagamento.HasValue ? x.DataPagamento.Value.ToString("dd/MM/yyyy") : "--",
+                        DataPagamentoOrder = x.DataPagamento,
                         DataVencimento = x.DataVencimento.HasValue ? x.DataVencimento.Value.ToString("dd/MM/yyyy") : "--",
+                        DataVencimentoOrder = x.DataVencimento,
                         DiasVencimento = x.DataVencimento.HasValue ? x.DataVencimento.Value < DateTime.Now ? x.DataVencimento.Value.Subtract(DateTime.Now).TotalDays : 0 : 0,
                         Pessoa = string.IsNullOrEmpty(x.Pessoa.Nome) ? x.Pessoa.RazaoSocial : x.Pessoa.Nome,
                         SituacaoConta = x.SituacaoConta.Descricao,
                         GrupoParcelaTexto = x.Parcela + "/" + x.TotalParcela,
                         x.GrupoParcela,
+                        x.Parcela,
                         Classificacao = x.Classificacao.Descricao,
                         x.IdTipoConta,
                         x.IdSituacaoConta,
@@ -416,19 +412,41 @@ namespace Parcker.Controllers
                         FormasPagamento = x.FormasPagamento.Descricao
                     }).ToList();
 
-                    //order
-                    model.order.ForEach(x =>
+                    //order: coluna escolhida como critério primário (preserva ordenação por múltiplas colunas)
+                    var criterios = new List<string>();
+                    if (model.order != null)
                     {
-                        //tratamento de cultura na ordenacao
-                        var colOrdem = model.columns[x.column].data;
-                        if (colOrdem == "Valor")
-                            colOrdem = "ValorInterno";
-
-                        if (colOrdem == "GrupoParcelaTexto")
-                            colOrdem = "GrupoParcela";
-
-                        data = data.OrderBy($"OrdenacaoSituacao, DiasVencimento desc, {colOrdem} {x.dir}").ToList();
-                    });
+                        criterios.AddRange(model.order
+                            .Where(o => !string.IsNullOrEmpty(model.columns[o.column].data))
+                            .Select(o =>
+                            {
+                                // mapeia a coluna do grid para o campo real de ordenação
+                                var col = model.columns[o.column].data;
+                                var dir = o.dir;
+                                switch (col)
+                                {
+                                    case "Valor":
+                                        return $"ValorInterno {dir}";                 // valor numérico, não a string "N2"
+                                    case "Lancamento":
+                                        return $"DataCriacao {dir}";                  // data real, não a string dd/MM/yyyy
+                                    case "DataPagamento":
+                                        return $"DataPagamentoOrder {dir}";           // data real, não a string dd/MM/yyyy
+                                    case "DataVencimento":
+                                        return $"DataVencimentoOrder {dir}";          // data real, não a string dd/MM/yyyy
+                                    case "GrupoParcelaTexto":
+                                        return $"GrupoParcela {dir}, Parcela {dir}";  // agrupa parcelas e ordena pela nº
+                                    case "Id":
+                                        return null;                                  // coluna de ações: não ordena
+                                    default:
+                                        return $"{col} {dir}";
+                                }
+                            })
+                            .Where(s => !string.IsNullOrEmpty(s)));
+                    }
+                    // desempate padrão: situação (pendentes primeiro) e vencimento
+                    criterios.Add("OrdenacaoSituacao");
+                    criterios.Add("DiasVencimento desc");
+                    data = data.OrderBy(string.Join(", ", criterios)).ToList();
 
                     //skip take
                     data = data.Skip(model.start).Take(model.length).ToList();
@@ -443,9 +461,9 @@ namespace Parcker.Controllers
                     }, JsonRequestBehavior.AllowGet);
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                throw ex;
+                throw;
             }
         }
         #endregion

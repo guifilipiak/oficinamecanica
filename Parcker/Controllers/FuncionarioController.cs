@@ -170,7 +170,7 @@ namespace Parcker.Controllers
                 var list = entity.All<Funcionario>();
                 recordsTotal = list.Count();
 
-                if (model.search.value != null)
+                if (!string.IsNullOrWhiteSpace(model.search.value))
                 {
                     list = list.Where(x => x.Pessoa.Nome.ToLower().Contains(model.search.value.ToLower()) ||
                                           x.Pessoa.CPF.Contains(model.search.value) ||
@@ -190,10 +190,15 @@ namespace Parcker.Controllers
                     Ativo = x.Ativo ? "Sim" : "Não"
                 }).ToList();
 
-                model.order.ForEach(x =>
+                //order (preserva ordenação por múltiplas colunas)
+                if (model.order != null && model.order.Any())
                 {
-                    data = data.OrderBy($"{model.columns[x.column].data} {x.dir}").ToList();
-                });
+                    var ordenacao = string.Join(", ", model.order
+                        .Where(x => !string.IsNullOrEmpty(model.columns[x.column].data))
+                        .Select(x => $"{model.columns[x.column].data} {x.dir}"));
+                    if (!string.IsNullOrEmpty(ordenacao))
+                        data = data.OrderBy(ordenacao).ToList();
+                }
 
                 data = data.Skip(model.start).Take(model.length).ToList();
 

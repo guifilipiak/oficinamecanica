@@ -42,14 +42,18 @@ namespace Parcker.Controllers
                 var modelDynamic = new Dictionary<string, string>();
                 using (var entity = new Entity())
                 {
-                    var totalOS = entity.All<OrdemServico>().Where(x => x.DataCriacao.Year == ano).Count();
-                    var totalOSAndamento = entity.All<OrdemServico>()
-                        .Where(x => x.DataCriacao.Year == ano && x.IdSituacaoServico == (int)SituacaoServicoEnum.EmAndamento)
-                        .Count();
-                    var totalOSFinalizada = entity.All<OrdemServico>()
-                        .Where(x => x.DataCriacao.Year == ano && x.IdSituacaoServico == (int)SituacaoServicoEnum.Finalizado).ToList();
-                    var percentOSFinalizada = totalOS != 0 ? Math.Round(Convert.ToDecimal(100 * totalOSFinalizada.Count() / totalOS)) : 0;
-                    var valorTotalOSFinalizada = totalOSFinalizada.Count > 0 ? totalOSFinalizada.Sum(x => x.Total) : 0;
+                    // Agrega direto no banco (Count/Sum) sem carregar as entidades OrdemServico inteiras,
+                    // evitando falha caso alguma coluna mapeada não exista e reduzindo o custo da consulta.
+                    var osDoAno = entity.All<OrdemServico>().Where(x => x.DataCriacao.Year == ano);
+
+                    var totalOS = osDoAno.Count();
+                    var totalOSAndamento = osDoAno.Count(x => x.IdSituacaoServico == (int)SituacaoServicoEnum.EmAndamento);
+
+                    var finalizadas = osDoAno.Where(x => x.IdSituacaoServico == (int)SituacaoServicoEnum.Finalizado);
+                    var totalOSFinalizada = finalizadas.Count();
+                    var valorTotalOSFinalizada = finalizadas.Select(x => (decimal?)x.Total).Sum() ?? 0m;
+
+                    var percentOSFinalizada = totalOS != 0 ? Math.Round(100m * totalOSFinalizada / totalOS) : 0;
 
                     modelDynamic.Add("QuantOS", totalOS.ToString());
                     modelDynamic.Add("QuantOSAndamento", totalOSAndamento.ToString());
@@ -148,28 +152,25 @@ namespace Parcker.Controllers
                     PointBorderWidth = 2
                 };
 
+                // Uma única consulta ao banco para o ano; agregação por mês feita em memória
+                var pagos = entity.All<PagarReceber>()
+                    .Where(x => x.IdSituacaoConta == (int)SituacaoContaEnum.Paga
+                           && x.DataPagamento.HasValue
+                           && x.DataPagamento.Value.Year == ano)
+                    .Select(x => new { x.DataPagamento, x.IdTipoConta, x.Valor })
+                    .ToList();
+
                 for (int i = 0; i < 12; i++)
                 {
-                    var abrev = CultureInfo.CurrentUICulture.DateTimeFormat.GetAbbreviatedMonthName(i + 1).ToUpper();
+                    var mes = i + 1;
+                    var abrev = CultureInfo.CurrentUICulture.DateTimeFormat.GetAbbreviatedMonthName(mes).ToUpper();
 
-                    var tq1 = entity.All<PagarReceber>()
-                        .Where(x => x.IdTipoConta == (int)TipoContaEnum.Pagar
-                               && x.DataPagamento.Value.Month == (i + 1)
-                               && x.DataPagamento.Value.Year == ano
-                               && x.IdSituacaoConta == (int)SituacaoContaEnum.Paga);
-                    var t1 = tq1.Count() > 0 ? tq1.Sum(x => x.Valor) : 0;
-
-                    var tq2 = entity.All<PagarReceber>()
-                        .Where(x => x.IdTipoConta == (int)TipoContaEnum.Receber
-                               && x.DataPagamento.Value.Month == (i + 1)
-                               && x.DataPagamento.Value.Year == ano
-                               && x.IdSituacaoConta == (int)SituacaoContaEnum.Paga);
-                    var t2 = tq2.Count() > 0 ? tq2.Sum(x => x.Valor) : 0;
-
-                    var total = t2 - t1;
+                    var doMes = pagos.Where(x => x.DataPagamento.Value.Month == mes);
+                    var t1 = doMes.Where(x => x.IdTipoConta == (int)TipoContaEnum.Pagar).Sum(x => x.Valor);
+                    var t2 = doMes.Where(x => x.IdTipoConta == (int)TipoContaEnum.Receber).Sum(x => x.Valor);
 
                     data.Labels.Add(abrev);
-                    ds.Data.Add(total);
+                    ds.Data.Add(t2 - t1);
                 }
 
                 data.Datasets.Add(ds);
@@ -231,23 +232,22 @@ namespace Parcker.Controllers
 
             using (var entity = new Entity())
             {
+                // Uma única consulta ao banco para o ano; agregação por mês feita em memória
+                var pagos = entity.All<PagarReceber>()
+                    .Where(x => x.IdSituacaoConta == (int)SituacaoContaEnum.Paga
+                           && x.DataPagamento.HasValue
+                           && x.DataPagamento.Value.Year == ano)
+                    .Select(x => new { x.DataPagamento, x.IdTipoConta, x.Valor })
+                    .ToList();
+
                 for (int i = 0; i < 12; i++)
                 {
-                    data.Labels.Add(CultureInfo.CurrentUICulture.DateTimeFormat.GetAbbreviatedMonthName(i + 1).ToUpper());
+                    var mes = i + 1;
+                    data.Labels.Add(CultureInfo.CurrentUICulture.DateTimeFormat.GetAbbreviatedMonthName(mes).ToUpper());
 
-                    var tq1 = entity.All<PagarReceber>()
-                        .Where(x => x.IdTipoConta == (int)TipoContaEnum.Pagar
-                               && x.DataPagamento.Value.Month == (i + 1)
-                               && x.DataPagamento.Value.Year == ano
-                               && x.IdSituacaoConta == (int)SituacaoContaEnum.Paga);
-                    var t1 = tq1.Count() > 0 ? tq1.Sum(x => x.Valor) : 0;
-
-                    var tq2 = entity.All<PagarReceber>()
-                        .Where(x => x.IdTipoConta == (int)TipoContaEnum.Receber
-                               && x.DataPagamento.Value.Month == (i + 1)
-                               && x.DataPagamento.Value.Year == ano
-                               && x.IdSituacaoConta == (int)SituacaoContaEnum.Paga);
-                    var t2 = tq2.Count() > 0 ? tq2.Sum(x => x.Valor) : 0;
+                    var doMes = pagos.Where(x => x.DataPagamento.Value.Month == mes);
+                    var t1 = doMes.Where(x => x.IdTipoConta == (int)TipoContaEnum.Pagar).Sum(x => x.Valor);
+                    var t2 = doMes.Where(x => x.IdTipoConta == (int)TipoContaEnum.Receber).Sum(x => x.Valor);
 
                     ds1.Data.Add(t1);
                     ds2.Data.Add(t2);

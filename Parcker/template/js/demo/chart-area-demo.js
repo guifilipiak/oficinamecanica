@@ -2,8 +2,9 @@
 Chart.defaults.global.defaultFontFamily = 'Nunito', '-apple-system,system-ui,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
 Chart.defaults.global.defaultFontColor = '#858796';
 
-buscarEstatisticaFluxoFinanceiro();
-buscarEstatisticaMensalOS();
+// Os gráficos são inicializados/atualizados por atualizaDashBoard() (home.js).
+// As instâncias são guardadas em window.* para serem destruídas antes de recriar,
+// evitando o erro "Canvas is already in use" que impedia a atualização por ano.
 
 function buscarEstatisticaMensalOS() {
     $.ajax({
@@ -14,7 +15,8 @@ function buscarEstatisticaMensalOS() {
         },
         success: function (json) {
             var ctx = document.getElementById("myAreaChart");
-            var myLineChart = new Chart(ctx, {
+            if (window.chartMensalOS) { window.chartMensalOS.destroy(); }
+            window.chartMensalOS = new Chart(ctx, {
                 type: 'line',
                 data: JSON.parse(json),
                 options: {
@@ -97,7 +99,8 @@ function buscarEstatisticaFluxoFinanceiro(){
         },
         success: function (json) {
             var ctx = document.getElementById("myAreaChart2");
-            var myLineChart = new Chart(ctx, {
+            if (window.chartFluxoFinanceiro) { window.chartFluxoFinanceiro.destroy(); }
+            window.chartFluxoFinanceiro = new Chart(ctx, {
                 type: 'line',
                 data: JSON.parse(json),
                 options: {

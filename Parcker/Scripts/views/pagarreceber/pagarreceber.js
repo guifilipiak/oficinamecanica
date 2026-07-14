@@ -4,7 +4,7 @@
             processing: true,
             serverSide: true,
             searching: true,
-            //order: [[0, "desc"]],
+            order: [[1, "desc"]], // Data Lançamento (desc) como ordenação padrão inicial
             ajax: {
                 url: URLBase + 'PagarReceber/RetornaLista',
                 type: 'POST',
@@ -70,6 +70,7 @@
                     title: '',
                     data: 'Id',
                     width: "225px",
+                    orderable: false,
                     render: function (data, type, row) {
                         var buttons = "";
                         var situacaoText = row.IdTipoConta == 1 ? "Paga" : "Rece";

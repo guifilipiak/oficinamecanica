@@ -189,7 +189,7 @@ namespace Parcker.Controllers
                 recordsTotal = list.Count();
 
                 //where
-                if (model.search.value != null)
+                if (!string.IsNullOrWhiteSpace(model.search.value))
                 {
                     list = list.Where(x => x.Pessoa.Nome.Contains(model.search.value));
                 }
@@ -206,11 +206,15 @@ namespace Parcker.Controllers
                     Endereco = $"Cep: {x.Pessoa.CEP} - {x.Pessoa.Endereco}, N:{x.Pessoa.Numero}, {x.Pessoa.Bairro} - {x.Pessoa.Cidade}/{x.Pessoa.UF}"
                 }).ToList();
 
-                //order
-                model.order.ForEach(x =>
+                //order (preserva ordenação por múltiplas colunas)
+                if (model.order != null && model.order.Any())
                 {
-                    data = data.OrderBy($"{model.columns[x.column].data} {x.dir}").ToList();
-                });
+                    var ordenacao = string.Join(", ", model.order
+                        .Where(x => !string.IsNullOrEmpty(model.columns[x.column].data))
+                        .Select(x => $"{model.columns[x.column].data} {x.dir}"));
+                    if (!string.IsNullOrEmpty(ordenacao))
+                        data = data.OrderBy(ordenacao).ToList();
+                }
 
                 //skip take
                 data = data.Skip(model.start).Take(model.length).ToList();

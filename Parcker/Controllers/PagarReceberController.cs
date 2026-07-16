@@ -348,7 +348,7 @@ namespace Parcker.Controllers
                     //where
                     if (model.@object != null)
                     {
-                        // Filtro por período de Lançamento (DataCriacao).
+                        // Filtro por período de Pagamento (DataPagamento).
                         // "Data Início"/"Data Final" da tela são transportadas nas propriedades DataPagamento/DataVencimento do model.
                         DateTime? dataInicio = model.@object.DataPagamento;
                         DateTime? dataFim = model.@object.DataVencimento;
@@ -357,13 +357,13 @@ namespace Parcker.Controllers
                         if (dataInicio.HasValue)
                         {
                             var inicio = dataInicio.Value.Date;
-                            list = list.Where(x => x.DataCriacao >= inicio);
+                            list = list.Where(x => x.DataPagamento >= inicio);
                         }
                         // limite superior: fim do dia informado (23:59:59)
                         if (dataFim.HasValue)
                         {
                             var fim = dataFim.Value.Date.AddDays(1).AddSeconds(-1);
-                            list = list.Where(x => x.DataCriacao <= fim);
+                            list = list.Where(x => x.DataPagamento <= fim);
                         }
 
                         if (model.@object.IdTipoConta != 0)
@@ -414,6 +414,14 @@ namespace Parcker.Controllers
 
                     //order: coluna escolhida como critério primário (preserva ordenação por múltiplas colunas)
                     var criterios = new List<string>();
+                    // Se foi aplicado filtro por período de pagamento, forçar ordenação decrescente por DataPagamento
+                    var aplicouFiltroPeriodoPagamento = model.@object != null && (model.@object.DataPagamento.HasValue || model.@object.DataVencimento.HasValue);
+
+                    if (aplicouFiltroPeriodoPagamento)
+                    {
+                        criterios.Add("DataPagamentoOrder desc");
+                    }
+
                     if (model.order != null)
                     {
                         criterios.AddRange(model.order
@@ -442,6 +450,11 @@ namespace Parcker.Controllers
                                 }
                             })
                             .Where(s => !string.IsNullOrEmpty(s)));
+                    }
+                    // Se não houve critérios e também não for filtro por período, aplicar default: DataPagamento desc
+                    if (!criterios.Any())
+                    {
+                        criterios.Add("DataPagamentoOrder desc");
                     }
                     // desempate padrão: situação (pendentes primeiro) e vencimento
                     criterios.Add("OrdenacaoSituacao");

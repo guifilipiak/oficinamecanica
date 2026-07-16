@@ -4,7 +4,7 @@
             processing: true,
             serverSide: true,
             searching: true,
-            order: [[1, "desc"]], // Data Lançamento (desc) como ordenação padrão inicial
+            order: [[5, "desc"]], // Pagamento (desc) como ordenação padrão inicial
             ajax: {
                 url: URLBase + 'PagarReceber/RetornaLista',
                 type: 'POST',
